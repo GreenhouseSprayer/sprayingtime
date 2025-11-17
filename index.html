@@ -409,12 +409,12 @@
 <table className="w-full border text-xs">
   <thead className="bg-gray-200">
     <tr>
-      <th className="border">MoA (Mode of Action)</th>
       <th className="border">Function</th>
-      <th className="border">Mask Needed</th>
-      <th className="border">Stage Active</th>
-      <th className="border">Warnings / Notes</th>
-      <th className="border">WALES</th>
+<th className="border">Measurement</th>
+<th className="border">Stage Active</th>
+<th className="border">Warnings / Notes</th>
+<th className="border">WALES</th>
+
     </tr>
   </thead>
   <tbody>
@@ -422,12 +422,12 @@
       const full = chemicalOptions.find((c) => c.chemical === chem);
       return (
         <tr key={i}>
-          <td className="border">{full?.moA}</td>
-          <td className="border">{full?.function}</td>
-          <td className="border">{full?.mask}</td>
-          <td className="border">{full?.stage}</td>
-          <td className="border">{full?.warn}</td>
-          <td className="border">{full?.wales}</td>
+          <td className="border">{full?.function || full?.moA}</td>
+<td className="border">{full?.measurement}</td>
+<td className="border">{full?.stage}</td>
+<td className="border">{full?.warn}</td>
+<td className="border">{full?.wales}</td>
+
         </tr>
       );
     })}
@@ -458,11 +458,24 @@
             <div>
               <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
               <div className="space-y-1 text-xs">
-                {PPE_ITEMS.map((p) => (
-                  <label key={p} className="flex items-center">
-                    <input type="checkbox" className="mr-1" /> {p}
-                  </label>
-                ))}
+               {PPE_ITEMS.map((p) => {
+  const needsMask = selectedChems.some(c => {
+    const full = chemicalOptions.find(x => x.chemical === c);
+    return full?.mask?.toLowerCase() === "mask";
+  });
+
+  return (
+    <label key={p} className="flex items-center">
+      <input
+        type="checkbox"
+        className="mr-1"
+        defaultChecked={p === "Respirator/Mask" && needsMask}
+      />{" "}
+      {p}
+    </label>
+  );
+})}
+
               </div>
             </div>
           </div>
@@ -495,6 +508,7 @@
   </script>
 </body>
 </html>
+
 
 
 
