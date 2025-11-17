@@ -388,38 +388,36 @@
 <h2 className="font-semibold mt-2 text-sm">
   Chemical Safety Information
 </h2>
+
+{/* Signal Word Summary */}
+<div className="font-semibold text-xs mb-1">
+  Signal Word (Most Restrictive):{" "}
+  <span className="font-bold">
+    {(() => {
+      const words = selectedChems
+        .map(c => chemicalOptions.find(x => x.chemical === c)?.signal || "")
+        .filter(Boolean);
+
+      if (words.includes("DANGER")) return "DANGER";
+      if (words.includes("WARNING")) return "WARNING";
+      if (words.includes("CAUTION")) return "CAUTION";
+      return "N/A";
+    })()}
+  </span>
+</div>
+
 <table className="w-full border text-xs">
   <thead className="bg-gray-200">
     <tr>
       <th className="border">MoA (Mode of Action)</th>
-      <th className="border">Signal Word</th>
+      <th className="border">Function</th>
       <th className="border">Mask Needed</th>
       <th className="border">Stage Active</th>
       <th className="border">Warnings / Notes</th>
       <th className="border">WALES</th>
     </tr>
   </thead>
-  <tbody>
-    {selectedChems.map((chem, i) => {
-      const full = chemicalOptions.find(
-        (c) => c.chemical === chem
-      );
-      return (
-        <tr key={i}>
-          <td className="border">{full?.moA}</td>
-          <td className="border">{full?.signal}</td>
-          <td className="border">{full?.mask}</td>
-          <td className="border">{full?.stage}</td>
-          <td className="border">{full?.warn}</td>
-          <td className="border">{full?.wales}</td>
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
-        
-
-          <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
+ <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold text-xs mb-1">Pests Targeted</h3>
@@ -480,5 +478,6 @@
   </script>
 </body>
 </html>
+
 
 
