@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spray Plan Builder</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      button, input[type="file"] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        font-size: 10px;
+      }
+      table {
+        page-break-inside: avoid;
+      }
+    }
+
+    body {
+      font-size: 12px;
+    }
+
+    table th,
+    table td {
+      padding: 2px !important;
+    }
+
+    .compact-input {
+      padding: 2px !important;
+      font-size: 12px !important;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 p-4">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
+    const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment"];
+
+    const PESTS = [
+      "Aphids", "Mites", "Thrips", "White Flies", "Rose Beetles",
+      "Fungal Gnats", "Mealy Bugs", "Botrytis", "Powdery Mildew", "Rust",
+      "Algae", "Moss", "Liverwort", "Lichens"
+    ];
+
+    const PPE_ITEMS = [
+      "Respirator/Mask", "Suit", "Long Sleeves/Pants", "Boots",
+      "Face Shield", "Gloves", "Protective Eyewear"
+    ];
+
+    function SprayPlanBuilder() {
+      const [chemicalOptions, setChemicalOptions] = React.useState([]);
+      const [applicators, setApplicators] = React.useState(DEFAULT_APPLICATORS);
+      const [selectedChems, setSelectedChems] = React.useState(["", "", "", ""]);
+      const [applicator, setApplicator] = React.useState("");
+      const [method, setMethod] = React.useState("");
+      const [error, setError] = React.useState("");
+
+      const chemicalSheetUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
+
+      const applicatorSheetUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
+
+      React.useEffect(() => {
+        // Load chemical data
+        fetch(chemicalSheetUrl)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            return res.text();
+          })
+          .then(parseChemicalCSV)
+          .catch((err) => {
+            console.error("Chemical sheet fetch error:", err);
+            setError("Unable to fetch chemical sheet — upload CSV manually.");
+          });
+
+        // Load applicators list
+        fetch(applicatorSheetUrl)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            return res.text();
+          })
+          .then(parseApplicatorCSV)
+          .catch((err) => {
+            console.warn("Applicator sheet fetch error, using defaults:", err);
+          });
+      }, []);
+
+      function parseChemicalCSV(data) {
+        console.log("Chemical CSV raw:", data.slice(0, 200) + "...");
+        const rows = data.split(/\r?\n/).filter((r) => r.trim() !== "");
+        if (rows.length < 2) return;
+
+        const headerRow = rows[0];
+        const headers = headerRow.split(",").map((h) => h.trim().toLowerCase());
+
+        console.log("Chemical headers:", headers);
+
+        const getIndex = (key) =>
+          headers.findIndex((h) => h.includes(key.toLowerCase()));
+
+        const indices = {
+          chemical: getIndex("chemical"),
+          epa: getIndex("epa reg"),
+          ai: getIndex("ai"),
+          rei: getIndex("rei"),
+          moA: getIndex("moa"),
+          irac: getIndex("chemical class"),
+          signal: getIndex("signal"),
+          mask: getIndex("mask"),
+          stage: getIndex("stage active"),
+          warn: getIndex("warnings"),
+          wales: getIndex("wales")
+        };
+
+        console.log("Detected indices:", indices);
+
+        if (indices.chemical === -1) {
+          setError("Could not find 'Chemical' column in sheet.");
+          return;
+        }
+
+        const chemicals = rows
+          .slice(1)
+          .map((row) => {
+            const cols = row.split(",");
+            const safe = (idx) =>
+              idx >= 0 && idx < cols.length ? cols[idx].trim() : "";
+
+            return {
+              chemical: safe(indices.chemical),
+              epaReg: safe(indices.epa),
+              ai: safe(indices.ai),
+              rei: safe(indices.rei),
+              moA: safe(indices.moA),
+              irac: safe(indices.irac),
+              signal: safe(indices.signal),
+              mask: safe(indices.mask),
+              stage: safe(indices.stage),
+              warn: safe(indices.warn),
+              wales: safe(indices.wales)
+            };
+          })
+          .filter((c) => c.chemical);
+
+        console.log("Parsed chemicals:", chemicals);
+        setChemicalOptions(chemicals);
+        setError("");
+      }
+
+      function parseApplicatorCSV(data) {
+        console.log("Applicator CSV raw:", data.slice(0, 200) + "...");
+        const rows = data.split(/\r?\n/).filter((r) => r.trim() !== "");
+        if (rows.length < 2) return; // header + at least 1 row
+
+        // Parse as CSV and use the LAST column ("Column 1") which holds applicator names.
+        // Row 1: header ("Column 1"), Row 2+: values like "jacob Imel -154063-572325".
+        const parsedRows = rows.map((r) => r.split(","));
+        const list = parsedRows
+          .slice(1)
+          .map((cols) => cols[cols.length - 1]?.trim())
+          .filter((val) => val && val.toLowerCase() !== "applicators");
+
+        console.log("Parsed applicators:", list);
+
+        if (list.length) {
+          setApplicators(list);
+        }
+      }
+
+      const handleCSVUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const content = event.target.result;
+          parseChemicalCSV(content);
+        };
+        reader.readAsText(file);
+      };
+
+      const handleApplicatorChange = (e) => {
+        setApplicator(e.target.value);
+      };
+
+      const handleAddApplicator = () => {
+        const input = document.getElementById("newApplicatorInput");
+        const val = input.value.trim();
+        if (!val) return;
+        if (!applicators.includes(val)) {
+          setApplicators([...applicators, val]);
+        }
+        input.value = "";
+      };
+
+      const handleRemoveApplicator = (name) => {
+        setApplicators(applicators.filter((a) => a !== name));
+        if (applicator === name) {
+          setApplicator("");
+        }
+      };
+
+      const handleMethodChange = (e) => {
+        setMethod(e.target.value);
+      };
+
+      const handleChemSelectChange = (index, value) => {
+        const updated = [...selectedChems];
+        updated[index] = value;
+        setSelectedChems(updated);
+      };
+
+      const pestMid = Math.ceil(PESTS.length / 2);
+
+      return (
+        <div className="space-y-4 max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-center">Spray Plan Builder</h1>
+
+          {error && (
+            <div className="bg-red-200 text-red-900 p-2 rounded">
+              {error}
+              <div className="mt-2">
+                <label className="block mb-1 text-sm">
+                  Upload CSV (as fallback):
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCSVUpload}
+                  className="block"
+                />
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => window.print()}
+            className="bg-blue-500 text-white px-3 py-1 rounded"
+          >
+            Print / Save PDF
+          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs">Date &amp; Time</label>
+              <input
+                type="datetime-local"
+                className="w-full border compact-input rounded"
+              />
+            </div>
+            <div>
+              <label className="text-xs">Area Treated</label>
+              <input
+                type="text"
+                placeholder="Area Treated"
+                className="w-full border compact-input rounded"
+              />
+            </div>
+            <div>
+              <label className="text-xs">Applicator</label>
+              <select
+                className="w-full border compact-input rounded"
+                value={applicator}
+                onChange={handleApplicatorChange}
+              >
+                <option value="">Select Applicator...</option>
+                {applicators.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-1 flex">
+                <input
+                  id="newApplicatorInput"
+                  type="text"
+                  className="w-full border compact-input rounded mr-1"
+                  placeholder="Add Applicator"
+                />
+                <button
+                  type="button"
+                  className="bg-green-500 text-white px-2 rounded"
+                  onClick={handleAddApplicator}
+                >
+                  Add
+                </button>
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
+                {applicators.map((a) => (
+                  <span
+                    key={a}
+                    className="border rounded px-1 flex items-center gap-1"
+                  >
+                    {a}
+                    <button
+                      type="button"
+                      className="text-red-600"
+                      onClick={() => handleRemoveApplicator(a)}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs">Method</label>
+              <select
+                className="w-full border compact-input rounded"
+                value={method}
+                onChange={handleMethodChange}
+              >
+                <option value="">Select Method...</option>
+                {DEFAULT_METHODS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
+          <table className="w-full border text-xs">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border">Chemical</th>
+                <th className="border">EPA #</th>
+                <th className="border">AI</th>
+                <th className="border">REI</th>
+                <th className="border">MoA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedChems.map((chem, i) => {
+                const full = chemicalOptions.find(
+                  (c) => c.chemical === chem
+                );
+                return (
+                  <tr key={i}>
+                    <td className="border">
+                      <select
+                        className="w-full border compact-input rounded"
+                        value={chem}
+                        onChange={(e) =>
+                          handleChemSelectChange(i, e.target.value)
+                        }
+                      >
+                        <option value="">Select...</option>
+                        {chemicalOptions.map((c) => (
+                          <option key={c.chemical} value={c.chemical}>
+                            {c.chemical}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="border">{full?.epaReg}</td>
+                    <td className="border">{full?.ai}</td>
+                    <td className="border">{full?.rei}</td>
+                    <td className="border">{full?.moA}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <h2 className="font-semibold mt-2 text-sm">
+            Chemical Safety Information
+          </h2>
+          <table className="w-full border text-xs">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border">IRAC Class</th>
+                <th className="border">Signal</th>
+                <th className="border">Mask</th>
+                <th className="border">Stage</th>
+                <th className="border">Warnings</th>
+                <th className="border">WALES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedChems.map((chem, i) => {
+                const full = chemicalOptions.find(
+                  (c) => c.chemical === chem
+                );
+                return (
+                  <tr key={i}>
+                    <td className="border">{full?.irac}</td>
+                    <td className="border">{full?.signal}</td>
+                    <td className="border">{full?.mask}</td>
+                    <td className="border">{full?.stage}</td>
+                    <td className="border">{full?.warn}</td>
+                    <td className="border">{full?.wales}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold text-xs mb-1">Pests Targeted</h3>
+              <div className="space-y-1 text-xs">
+                <div className="flex flex-wrap gap-x-4">
+                  {PESTS.slice(0, pestMid).map((p) => (
+                    <label key={p} className="flex items-center">
+                      <input type="checkbox" className="mr-1" /> {p}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-x-4">
+                  {PESTS.slice(pestMid).map((p) => (
+                    <label key={p} className="flex items-center">
+                      <input type="checkbox" className="mr-1" /> {p}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
+              <div className="space-y-1 text-xs">
+                {PPE_ITEMS.map((p) => (
+                  <label key={p} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {p}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 border-t pt-3">
+            <h2 className="font-bold text-sm mb-1">Emergency Information</h2>
+            <div className="border p-2 rounded bg-red-50 text-xs">
+              <p>
+                <strong>In an emergency, contact:</strong> 911
+              </p>
+              <p>
+                <strong>Poison Control:</strong> 222-2227
+              </p>
+            </div>
+          </div>
+
+          <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
+          <textarea
+            className="w-full border rounded p-2 compact-input"
+            rows="2"
+            placeholder="Enter crop, block, or greenhouse zones treated..."
+          />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(
+      <SprayPlanBuilder />
+    );
+  </script>
+</body>
+</html>
