@@ -385,39 +385,39 @@
               })}
             </tbody>
           </table>
-
-          <h2 className="font-semibold mt-2 text-sm">
-            Chemical Safety Information
-          </h2>
-          <table className="w-full border text-xs">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="border">IRAC Class</th>
-                <th className="border">Signal</th>
-                <th className="border">Mask</th>
-                <th className="border">Stage</th>
-                <th className="border">Warnings</th>
-                <th className="border">WALES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedChems.map((chem, i) => {
-                const full = chemicalOptions.find(
-                  (c) => c.chemical === chem
-                );
-                return (
-                  <tr key={i}>
-                    <td className="border">{full?.irac}</td>
-                    <td className="border">{full?.signal}</td>
-                    <td className="border">{full?.mask}</td>
-                    <td className="border">{full?.stage}</td>
-                    <td className="border">{full?.warn}</td>
-                    <td className="border">{full?.wales}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+<h2 className="font-semibold mt-2 text-sm">
+  Chemical Safety Information
+</h2>
+<table className="w-full border text-xs">
+  <thead className="bg-gray-200">
+    <tr>
+      <th className="border">MoA (Mode of Action)</th>
+      <th className="border">Signal Word</th>
+      <th className="border">Mask Needed</th>
+      <th className="border">Stage Active</th>
+      <th className="border">Warnings / Notes</th>
+      <th className="border">WALES</th>
+    </tr>
+  </thead>
+  <tbody>
+    {selectedChems.map((chem, i) => {
+      const full = chemicalOptions.find(
+        (c) => c.chemical === chem
+      );
+      return (
+        <tr key={i}>
+          <td className="border">{full?.moA}</td>
+          <td className="border">{full?.signal}</td>
+          <td className="border">{full?.mask}</td>
+          <td className="border">{full?.stage}</td>
+          <td className="border">{full?.warn}</td>
+          <td className="border">{full?.wales}</td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+        
 
           <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -480,4 +480,5 @@
   </script>
 </body>
 </html>
+
 
