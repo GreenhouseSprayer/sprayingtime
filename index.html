@@ -99,19 +99,20 @@
         const getIndex = (k) => headers.findIndex(h => h.includes(k.toLowerCase()));
 
         const indices = {
-          chemical: getIndex("chemical"),
-          epa: getIndex("epa"),
-          ai: getIndex("ai"),
-          rei: getIndex("rei"),
-          moA: getIndex("moa"),
-          irac: getIndex("chemical class"),
-          signal: getIndex("signal"),
-          mask: getIndex("mask"),
-          stage: getIndex("stage active"),
-          warn: getIndex("warnings"),
-          wales: getIndex("wales"),
-          measurement: getIndex("measurement")
-        };
+  chemical: getIndex("chemical"),
+  epa: getIndex("epa"),
+  ai: getIndex("ai"),
+  rei: getIndex("rei"),
+  function: getIndex("function"),
+  moA: getIndex("moa"),
+  irac: getIndex("chemical class"),
+  signal: getIndex("signal"),
+  mask: getIndex("mask"),
+  stage: getIndex("stage active"),
+  warn: getIndex("warnings"),
+  wales: getIndex("wales"),
+  measurement: getIndex("measurement")
+};
 
         const chemicals = rows.slice(1).map(row => {
           const cols = row.split(",");
@@ -273,8 +274,8 @@
                 const full = chemicalOptions.find(c => c.chemical === chem);
                 return (
                   <tr key={i}>
-                    <td className="border">{full?.moA}</td>
-                    <td className="border whitespace-nowrap">{full?.measurement}</td>
+                    <td className="border">{full?.function || full?.moA}</td>
+<td className="border whitespace-nowrap">{full?.measurement}</td>
                     <td className="border">{full?.stage}</td>
                     <td className="border">{full?.warn}</td>
                     <td className="border">{full?.wales}</td>
@@ -356,3 +357,4 @@
   </script>
 </body>
 </html>
+
