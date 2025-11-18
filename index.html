@@ -125,4 +125,180 @@
             moA: safe(idx.moA),
             stage: safe(idx.stage),
             warn: safe(idx.warn),
+            mask: safe(idx.mask),
+            wales: safe(idx.wales),
+            measurement: safe(idx.measurement)
+          };
+        });
 
+        setChemicalOptions(chemicals.filter(c => c.chemical));
+      }
+
+      function parseApplicatorCSV(data) {
+        const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
+        const parsed = rows.map(r => r.split(","));
+        const list = parsed.slice(1).map(r => r[r.length - 1]?.trim());
+        if (list.length) setApplicators(list);
+      }
+
+      const handleChemSelectChange = (index, value) => {
+        const updated = [...selectedChems];
+        updated[index] = value;
+        setSelectedChems(updated);
+      };
+
+      const pestMid = Math.ceil(PESTS.length / 2);
+
+      return (
+        <div className="space-y-4 max-w-4xl mx-auto">
+
+          <div className="flex items-center gap-3">
+            <img src="logo.png" alt="Gardens Alive Logo" className="w-20 h-20 object-contain" />
+            <h1 className="text-2xl font-bold">Spray Plan Builder</h1>
+          </div>
+
+          <button
+            onClick={() => window.print()}
+            className="bg-blue-500 text-white px-3 py-1 rounded"
+          >
+            Print / Save PDF
+          </button>
+
+          <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
+          <table className="w-full border text-xs">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border">Chemical</th>
+                <th className="border">EPA #</th>
+                <th className="border">AI</th>
+                <th className="border">REI</th>
+                <th className="border">Function</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedChems.map((chem, i) => {
+                const full = chemicalOptions.find(c => c.chemical === chem);
+                return (
+                  <tr key={i}>
+                    <td className="border">
+                      <select
+                        className="w-full border compact-input rounded"
+                        value={chem}
+                        onChange={(e) => handleChemSelectChange(i, e.target.value)}
+                      >
+                        <option value="">Select...</option>
+                        {chemicalOptions.map((c) => (
+                          <option key={c.chemical} value={c.chemical}>
+                            {c.chemical}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="border">{full?.epaReg}</td>
+                    <td className="border">{full?.ai}</td>
+                    <td className="border">{full?.rei}</td>
+                    <td className="border">{full?.moA}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <h2 className="font-semibold mt-2 text-sm">Chemical Safety Information</h2>
+
+          <table className="w-full border text-xs">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border">Function</th>
+                <th className="border">Measurement</th>
+                <th className="border">Stage Active</th>
+                <th className="border">Warnings / Notes</th>
+                <th className="border">WALES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedChems.map((chem, i) => {
+                const full = chemicalOptions.find((c) => c.chemical === chem);
+                return (
+                  <tr key={i}>
+                    <td className="border">{full?.moA}</td>
+                    <td className="border">{full?.measurement}</td>
+                    <td className="border">{full?.stage}</td>
+                    <td className="border">{full?.warn}</td>
+                    <td className="border">{full?.wales}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold text-xs mb-1">Pests Targeted</h3>
+              <div className="space-y-1 text-xs">
+                <div className="flex flex-wrap gap-x-4">
+                  {PESTS.slice(0, pestMid).map((p) => (
+                    <label key={p} className="flex items-center">
+                      <input type="checkbox" className="mr-1" /> {p}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-x-4">
+                  {PESTS.slice(pestMid).map((p) => (
+                    <label key={p} className="flex items-center">
+                      <input type="checkbox" className="mr-1" /> {p}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
+              <div className="space-y-1 text-xs">
+                {PPE_ITEMS.map((p) => {
+                  const needsMask = selectedChems.some(c => {
+                    const full = chemicalOptions.find(x => x.chemical === c);
+                    return full?.mask?.toLowerCase() === "mask";
+                  });
+
+                  return (
+                    <label key={p} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="mr-1"
+                        defaultChecked={p === "Respirator/Mask" && needsMask}
+                      />{" "}
+                      {p}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 border-t pt-3">
+            <h2 className="font-bold text-sm mb-1">Emergency Information</h2>
+            <div className="border p-2 rounded bg-red-50 text-xs">
+              <p><strong>In an emergency, contact:</strong> 911</p>
+              <p><strong>Poison Control:</strong> 222-2227</p>
+            </div>
+          </div>
+
+          <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
+          <textarea
+            className="w-full border rounded p-2 compact-input"
+            rows="2"
+            placeholder="Enter crop, block, or greenhouse zones treated..."
+          />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(
+      <SprayPlanBuilder />
+    );
+  </script>
+</body>
+</html>
