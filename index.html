@@ -31,13 +31,13 @@
     table td {
       padding: 2px !important;
     }
-    table td, table th {
-  word-wrap: break-word;
-  word-break: break-word;
-  white-space: normal;
-  vertical-align: top;
-}
 
+    table td, table th {
+      word-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+      vertical-align: top;
+    }
 
     .compact-input {
       padding: 2px !important;
@@ -131,7 +131,10 @@
           mask: getIndex("mask"),
           stage: getIndex("stage active"),
           warn: getIndex("warnings"),
-          wales: getIndex("wales")
+          wales: getIndex("wales"),
+          // new fields:
+          function: getIndex("function"),
+          measurement: getIndex("measur") // handles "Measurment" typo
         };
 
         console.log("Detected indices:", indices);
@@ -159,7 +162,9 @@
               mask: safe(indices.mask),
               stage: safe(indices.stage),
               warn: safe(indices.warn),
-              wales: safe(indices.wales)
+              wales: safe(indices.wales),
+              function: safe(indices.function),
+              measurement: safe(indices.measurement)
             };
           })
           .filter((c) => c.chemical);
@@ -175,7 +180,6 @@
         if (rows.length < 2) return; // header + at least 1 row
 
         // Parse as CSV and use the LAST column ("Column 1") which holds applicator names.
-        // Row 1: header ("Column 1"), Row 2+: values like "jacob Imel -154063-572325".
         const parsedRows = rows.map((r) => r.split(","));
         const list = parsedRows
           .slice(1)
@@ -233,6 +237,12 @@
       };
 
       const pestMid = Math.ceil(PESTS.length / 2);
+
+      // any mask needed?
+      const needsMask = selectedChems.some((chem) => {
+        const full = chemicalOptions.find((c) => c.chemical === chem);
+        return full?.mask?.toLowerCase() === "mask";
+      });
 
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
@@ -385,56 +395,55 @@
               })}
             </tbody>
           </table>
-<h2 className="font-semibold mt-2 text-sm">
-  Chemical Safety Information
-</h2>
 
-{/* Signal Word Summary */}
-<div className="font-semibold text-xs mb-1">
-  Signal Word (Most Restrictive):{" "}
-  <span className="font-bold">
-    {(() => {
-      const words = selectedChems
-        .map(c => chemicalOptions.find(x => x.chemical === c)?.signal || "")
-        .filter(Boolean);
+          <h2 className="font-semibold mt-2 text-sm">
+            Chemical Safety Information
+          </h2>
 
-      if (words.includes("DANGER")) return "DANGER";
-      if (words.includes("WARNING")) return "WARNING";
-      if (words.includes("CAUTION")) return "CAUTION";
-      return "N/A";
-    })()}
-  </span>
-</div>
+          {/* Signal Word Summary */}
+          <div className="font-semibold text-xs mb-1">
+            Signal Word (Most Restrictive):{" "}
+            <span className="font-bold">
+              {(() => {
+                const words = selectedChems
+                  .map((c) => chemicalOptions.find((x) => x.chemical === c)?.signal || "")
+                  .filter(Boolean);
 
-<table className="w-full border text-xs">
-  <thead className="bg-gray-200">
-    <tr>
-      <th className="border">Function</th>
-<th className="border">Measurement</th>
-<th className="border">Stage Active</th>
-<th className="border">Warnings / Notes</th>
-<th className="border">WALES</th>
+                if (words.includes("DANGER")) return "DANGER";
+                if (words.includes("WARNING")) return "WARNING";
+                if (words.includes("CAUTION")) return "CAUTION";
+                return "N/A";
+              })()}
+            </span>
+          </div>
 
-    </tr>
-  </thead>
-  <tbody>
-    {selectedChems.map((chem, i) => {
-      const full = chemicalOptions.find((c) => c.chemical === chem);
-      return (
-        <tr key={i}>
-          <td className="border">{full?.function || full?.moA}</td>
-<td className="border">{full?.measurement}</td>
-<td className="border">{full?.stage}</td>
-<td className="border">{full?.warn}</td>
-<td className="border">{full?.wales}</td>
+          <table className="w-full border text-xs">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border">Function</th>
+                <th className="border">Measurement</th>
+                <th className="border">Stage Active</th>
+                <th className="border">Warnings / Notes</th>
+                <th className="border">WALES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedChems.map((chem, i) => {
+                const full = chemicalOptions.find((c) => c.chemical === chem);
+                return (
+                  <tr key={i}>
+                    <td className="border">{full?.function || full?.moA}</td>
+                    <td className="border">{full?.measurement}</td>
+                    <td className="border">{full?.stage}</td>
+                    <td className="border">{full?.warn}</td>
+                    <td className="border">{full?.wales}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
-
- <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
+          <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold text-xs mb-1">Pests Targeted</h3>
@@ -458,24 +467,16 @@
             <div>
               <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
               <div className="space-y-1 text-xs">
-               {PPE_ITEMS.map((p) => {
-  const needsMask = selectedChems.some(c => {
-    const full = chemicalOptions.find(x => x.chemical === c);
-    return full?.mask?.toLowerCase() === "mask";
-  });
-
-  return (
-    <label key={p} className="flex items-center">
-      <input
-        type="checkbox"
-        className="mr-1"
-        defaultChecked={p === "Respirator/Mask" && needsMask}
-      />{" "}
-      {p}
-    </label>
-  );
-})}
-
+                {PPE_ITEMS.map((p) => (
+                  <label key={p} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="mr-1"
+                      defaultChecked={p === "Respirator/Mask" && needsMask}
+                    />{" "}
+                    {p}
+                  </label>
+                ))}
               </div>
             </div>
           </div>
@@ -508,6 +509,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
