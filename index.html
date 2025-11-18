@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spray Plan </title>
+  <title>Spray Plan Builder</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -32,8 +32,7 @@
       padding: 2px !important;
     }
 
-    table td,
-    table th {
+    table td, table th {
       word-wrap: break-word;
       word-break: break-word;
       white-space: normal;
@@ -81,63 +80,65 @@
 
       React.useEffect(() => {
         fetch(chemicalSheetUrl)
-          .then((res) => res.text())
+          .then(res => res.text())
           .then(parseChemicalCSV)
           .catch(() => setError("Unable to fetch chemical sheet — upload CSV manually."));
 
         fetch(applicatorSheetUrl)
-          .then((res) => res.text())
+          .then(res => res.text())
           .then(parseApplicatorCSV)
           .catch(() => {});
       }, []);
 
       function parseChemicalCSV(data) {
-        const rows = data.split(/\r?\n/).filter((r) => r.trim() !== "");
-        const headers = rows[0].split(",").map((h) => h.trim().toLowerCase());
+        const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
+        if (rows.length < 2) return;
 
-        const getIndex = (key) => headers.findIndex((h) => h.includes(key));
+        const headers = rows[0].split(",").map(h => h.trim().toLowerCase());
+
+        const getIndex = (k) => headers.findIndex(h => h.includes(k.toLowerCase()));
 
         const indices = {
           chemical: getIndex("chemical"),
-          epa: getIndex("epa reg"),
+          epa: getIndex("epa"),
           ai: getIndex("ai"),
           rei: getIndex("rei"),
           moA: getIndex("moa"),
-          function: getIndex("function"),
-          measurement: getIndex("measurement"),
-          stage: getIndex("stage"),
+          irac: getIndex("chemical class"),
+          signal: getIndex("signal"),
+          mask: getIndex("mask"),
+          stage: getIndex("stage active"),
           warn: getIndex("warnings"),
           wales: getIndex("wales"),
-          mask: getIndex("mask"),
-          signal: getIndex("signal")
+          measurement: getIndex("measurement")
         };
 
-        const chemicals = rows.slice(1).map((row) => {
+        const chemicals = rows.slice(1).map(row => {
           const cols = row.split(",");
-          return {
-            chemical: cols[indices.chemical]?.trim(),
-            epaReg: cols[indices.epa]?.trim(),
-            ai: cols[indices.ai]?.trim(),
-            rei: cols[indices.rei]?.trim(),
-            moA: cols[indices.moA]?.trim(),
-            function: cols[indices.function]?.trim(),
-            measurement: cols[indices.measurement]?.trim(),
-            stage: cols[indices.stage]?.trim(),
-            warn: cols[indices.warn]?.trim(),
-            wales: cols[indices.wales]?.trim(),
-            mask: cols[indices.mask]?.trim(),
-            signal: cols[indices.signal]?.trim()
-          };
-        });
+          const safe = (i) => i >= 0 && i < cols.length ? cols[i].trim() : "";
 
-        setChemicalOptions(chemicals.filter((c) => c.chemical));
+          return {
+            chemical: safe(indices.chemical),
+            epaReg: safe(indices.epa),
+            ai: safe(indices.ai),
+            rei: safe(indices.rei),
+            moA: safe(indices.moA),
+            signal: safe(indices.signal),
+            mask: safe(indices.mask),
+            stage: safe(indices.stage),
+            warn: safe(indices.warn),
+            wales: safe(indices.wales),
+            measurement: safe(indices.measurement)
+          };
+        }).filter(c => c.chemical);
+
+        setChemicalOptions(chemicals);
       }
 
       function parseApplicatorCSV(data) {
-        const rows = data.split(/\r?\n/).filter((r) => r.trim() !== "");
-        const parsedRows = rows.map((r) => r.split(","));
-        const list = parsedRows.slice(1).map((cols) => cols[cols.length - 1]?.trim());
-
+        const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
+        const parsed = rows.map(r => r.split(","));
+        const list = parsed.slice(1).map(cols => cols[cols.length - 1]?.trim());
         if (list.length) setApplicators(list);
       }
 
@@ -145,120 +146,61 @@
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (event) => parseChemicalCSV(event.target.result);
+        reader.onload = e => parseChemicalCSV(e.target.result);
         reader.readAsText(file);
       };
 
-      const handleApplicatorChange = (e) => setApplicator(e.target.value);
-      const handleMethodChange = (e) => setMethod(e.target.value);
-
-      const handleAddApplicator = () => {
-        const input = document.getElementById("newApplicatorInput");
-        const val = input.value.trim();
-        if (val && !applicators.includes(val)) {
-          setApplicators([...applicators, val]);
-        }
-        input.value = "";
-      };
-
-      const handleRemoveApplicator = (name) => {
-        setApplicators(applicators.filter((a) => a !== name));
-      };
-
-      const handleChemSelectChange = (index, value) => {
-        const updated = [...selectedChems];
-        updated[index] = value;
-        setSelectedChems(updated);
-      };
-
       const pestMid = Math.ceil(PESTS.length / 2);
-      const needsMask = selectedChems.some((c) => {
-        const full = chemicalOptions.find((x) => x.chemical === c);
-        return full?.mask?.toLowerCase() === "mask";
-      });
 
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
+
           <div className="flex items-center gap-3">
-            <img
-              src="logo.png"
-              alt="Gardens Alive Logo"
-              className="w-20 h-20 object-contain"
-            />
+            <img src="GardensAliveLogo.png" alt="Gardens Alive Logo" className="h-16 w-auto" />
             <h1 className="text-2xl font-bold">Spray Plan Builder</h1>
           </div>
-
-          <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => window.print()}>
-            Print / Save PDF
-          </button>
 
           {error && (
             <div className="bg-red-200 text-red-900 p-2 rounded">
               {error}
-              <div className="mt-2">
-                <label className="block mb-1 text-sm">Upload CSV (as fallback):</label>
-                <input type="file" accept=".csv" onChange={handleCSVUpload} className="block" />
-              </div>
+              <input type="file" accept=".csv" onChange={handleCSVUpload} className="mt-1" />
             </div>
           )}
+
+          <button onClick={() => window.print()} className="bg-blue-500 text-white px-3 py-1 rounded">
+            Print / Save PDF
+          </button>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs">Date & Time</label>
               <input type="datetime-local" className="w-full border compact-input rounded" />
             </div>
+
             <div>
               <label className="text-xs">Area Treated</label>
-              <input type="text" placeholder="Area Treated" className="w-full border compact-input rounded" />
+              <input type="text" className="w-full border compact-input rounded" placeholder="Area Treated" />
             </div>
+
             <div>
               <label className="text-xs">Applicator</label>
-              <select
-                className="w-full border compact-input rounded"
-                value={applicator}
-                onChange={handleApplicatorChange}
-              >
+              <select className="w-full border compact-input rounded" value={applicator} onChange={e => setApplicator(e.target.value)}>
                 <option value="">Select Applicator...</option>
-                {applicators.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
+                {applicators.map(a => <option key={a}>{a}</option>)}
               </select>
-              <div className="mt-1 flex">
-                <input
-                  id="newApplicatorInput"
-                  type="text"
-                  className="w-full border compact-input rounded mr-1"
-                  placeholder="Add Applicator"
-                />
-                <button
-                  type="button"
-                  className="bg-green-500 text-white px-2 rounded"
-                  onClick={handleAddApplicator}
-                >
-                  Add
-                </button>
-              </div>
             </div>
+
             <div>
               <label className="text-xs">Method</label>
-              <select
-                className="w-full border compact-input rounded"
-                value={method}
-                onChange={handleMethodChange}
-              >
+              <select className="w-full border compact-input rounded" value={method} onChange={e => setMethod(e.target.value)}>
                 <option value="">Select Method...</option>
-                {DEFAULT_METHODS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
+                {DEFAULT_METHODS.map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
           </div>
 
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
+
           <table className="w-full border text-xs">
             <thead className="bg-gray-200">
               <tr>
@@ -271,20 +213,20 @@
             </thead>
             <tbody>
               {selectedChems.map((chem, i) => {
-                const full = chemicalOptions.find((c) => c.chemical === chem);
+                const full = chemicalOptions.find(c => c.chemical === chem);
                 return (
                   <tr key={i}>
                     <td className="border">
-                      <select
-                        className="w-full border compact-input rounded"
+                      <select className="w-full border compact-input rounded"
                         value={chem}
-                        onChange={(e) => handleChemSelectChange(i, e.target.value)}
-                      >
+                        onChange={e => {
+                          const newList = [...selectedChems];
+                          newList[i] = e.target.value;
+                          setSelectedChems(newList);
+                        }}>
                         <option value="">Select...</option>
-                        {chemicalOptions.map((c) => (
-                          <option key={c.chemical} value={c.chemical}>
-                            {c.chemical}
-                          </option>
+                        {chemicalOptions.map(c => (
+                          <option key={c.chemical} value={c.chemical}>{c.chemical}</option>
                         ))}
                       </select>
                     </td>
@@ -305,7 +247,7 @@
             <span className="font-bold">
               {(() => {
                 const words = selectedChems
-                  .map((c) => chemicalOptions.find((x) => x.chemical === c)?.signal || "")
+                  .map(c => chemicalOptions.find(x => x.chemical === c)?.signal || "")
                   .filter(Boolean);
 
                 if (words.includes("DANGER")) return "DANGER";
@@ -320,7 +262,7 @@
             <thead className="bg-gray-200">
               <tr>
                 <th className="border">Function</th>
-                <th className="border">Measurement</th>
+                <th className="border whitespace-nowrap w-28">Measurement</th>
                 <th className="border">Stage Active</th>
                 <th className="border">Warnings / Notes</th>
                 <th className="border">WALES</th>
@@ -328,11 +270,11 @@
             </thead>
             <tbody>
               {selectedChems.map((chem, i) => {
-                const full = chemicalOptions.find((c) => c.chemical === chem);
+                const full = chemicalOptions.find(c => c.chemical === chem);
                 return (
                   <tr key={i}>
-                    <td className="border">{full?.function || full?.moA}</td>
-                    <td className="border">{full?.measurement}</td>
+                    <td className="border">{full?.moA}</td>
+                    <td className="border whitespace-nowrap">{full?.measurement}</td>
                     <td className="border">{full?.stage}</td>
                     <td className="border">{full?.warn}</td>
                     <td className="border">{full?.wales}</td>
@@ -343,34 +285,51 @@
           </table>
 
           <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold text-xs mb-1">Pests Targeted</h3>
-              <div className="space-y-1 text-xs">
-                {[0, 1].map((col) => (
-                  <div key={col} className="flex flex-wrap gap-x-4">
-                    {PESTS.slice(col * pestMid, (col + 1) * pestMid).map((p) => (
-                      <label key={p} className="flex items-center">
-                        <input type="checkbox" className="mr-1" /> {p}
-                      </label>
-                    ))}
-                  </div>
-                ))}
+              <div className="text-xs space-y-1">
+                <div className="flex flex-wrap gap-x-4">
+                  {PESTS.slice(0, pestMid).map(p => (
+                    <label key={p} className="flex items-center">
+                      <input type="checkbox" className="mr-1" /> {p}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-x-4">
+                  {PESTS.slice(pestMid).map(p => (
+                    <label key={p} className="flex items-center">
+                      <input type="checkbox" className="mr-1" /> {p}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
+
             <div>
               <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
-              <div className="space-y-1 text-xs">
-                {PPE_ITEMS.map((p) => (
-                  <label key={p} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="mr-1"
-                      defaultChecked={p === "Respirator/Mask" && needsMask}
-                    />
-                    {p}
-                  </label>
-                ))}
+              <div className="text-xs space-y-1">
+                {PPE_ITEMS.map((p) => {
+                  const needsMask = selectedChems.some(c => {
+                    const full = chemicalOptions.find(x => x.chemical === c);
+                    return full?.mask?.toLowerCase() === "mask";
+                  });
+
+                  const isMask = p === "Respirator/Mask";
+
+                  return (
+                    <label key={p} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="mr-1"
+                        checked={isMask ? needsMask : undefined}
+                        onChange={() => {}}
+                      />
+                      {p}
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -378,12 +337,8 @@
           <div className="mt-4 border-t pt-3">
             <h2 className="font-bold text-sm mb-1">Emergency Information</h2>
             <div className="border p-2 rounded bg-red-50 text-xs">
-              <p>
-                <strong>In an emergency, contact:</strong> 911
-              </p>
-              <p>
-                <strong>Poison Control:</strong> 222-2227
-              </p>
+              <p><strong>In an emergency, contact:</strong> 911</p>
+              <p><strong>Poison Control:</strong> 222-2227</p>
             </div>
           </div>
 
@@ -401,5 +356,3 @@
   </script>
 </body>
 </html>
-
-
