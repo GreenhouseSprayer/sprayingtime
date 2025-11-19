@@ -13,6 +13,8 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
 
   <style>
     @media print {
@@ -112,51 +114,29 @@ html {
       }, []);
 
       function parseChemicalCSV(data) {
-        const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
-        if (rows.length < 2) return;
+  const parsed = Papa.parse(data, {
+    header: true,
+    skipEmptyLines: true,
+  });
 
-        const headers = rows[0].split(",").map(h => h.trim().toLowerCase());
+  const chemicals = parsed.data.map(row => ({
+    chemical: row["Chemical"]?.trim() || "",
+    epaReg: row["EPA"]?.trim() || "",
+    ai: row["AI"]?.trim() || "",
+    rei: row["REI"]?.trim() || "",
+    function: row["Function"]?.trim() || "",
+    moA: row["MoA"]?.trim() || "",
+    signal: row["Signal"]?.trim() || "",
+    mask: row["Mask"]?.trim() || "",
+    stage: row["Stage Active"]?.trim() || "",
+    warn: row["Warnings"]?.trim() || "",
+    wales: row["WALES"]?.trim() || "",
+    measurement: row["Measurement"]?.trim() || "",
+  }));
 
-        const getIndex = (k) => headers.findIndex(h => h.includes(k.toLowerCase()));
+  setChemicalOptions(chemicals.filter(c => c.chemical));
+}
 
-        const indices = {
-  chemical: getIndex("chemical"),
-  epa: getIndex("epa"),
-  ai: getIndex("ai"),
-  rei: getIndex("rei"),
-  function: getIndex("function"),
-  moA: getIndex("moa"),
-  irac: getIndex("chemical class"),
-  signal: getIndex("signal"),
-  mask: getIndex("mask"),
-  stage: getIndex("stage active"),
-  warn: getIndex("warnings"),
-  wales: getIndex("wales"),
-  measurement: getIndex("measurement")
-};
-
-        const chemicals = rows.slice(1).map(row => {
-          const cols = row.split(",");
-          const safe = (i) => i >= 0 && i < cols.length ? cols[i].trim() : "";
-
-          return {
-            chemical: safe(indices.chemical),
-            epaReg: safe(indices.epa),
-            ai: safe(indices.ai),
-            rei: safe(indices.rei),
-            function: safe(indices.function),
-moA: safe(indices.moA),
-            signal: safe(indices.signal),
-            mask: safe(indices.mask),
-            stage: safe(indices.stage),
-            warn: safe(indices.warn),
-            wales: safe(indices.wales),
-            measurement: safe(indices.measurement)
-          };
-        }).filter(c => c.chemical);
-
-        setChemicalOptions(chemicals);
-      }
 
       function parseApplicatorCSV(data) {
         const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
@@ -385,6 +365,7 @@ moA: safe(indices.moA),
   </script>
 </body>
 </html>
+
 
 
 
