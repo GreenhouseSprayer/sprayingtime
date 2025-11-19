@@ -114,31 +114,52 @@ html {
       }, []);
 
       function parseChemicalCSV(data) {
+  // Fallback: if Papa isn't available for some reason, do nothing
+  if (typeof Papa === "undefined") {
+    console.error("PapaParse not loaded");
+    return;
+  }
+
   const parsed = Papa.parse(data, {
     header: true,
     skipEmptyLines: true,
+    transformHeader: (header) =>
+      header
+        .replace(/\u00a0/g, " ") // convert non-breaking spaces to normal
+        .trim()
+        .toLowerCase(),          // normalize for easy matching
   });
 
-  const chemicals = parsed.data.map(row => ({
-    chemical: row["Chemical"]?.trim() || "",
-    measurement: row["measurement"]?.trim() || "",
-    epaReg: row["EPA REG #"]?.trim() || "",
-    wales: row["WALES"]?.trim() || "",
-    warn: row["Warnings/ Notes"]?.trim() || "",
-    ai: row["AI"]?.trim() || "",
-    moA: row["Moa"]?.trim() || "",
-    rei: row["REI"]?.trim() || "",
-    function: row["function"]?.trim() || "",
-    stage: row["Stage active"]?.trim() || "",
-    irac: row["chemical class"]?.trim() || "",
-    signal: row["Signal word"]?.trim() || "",
-    mask: row["MASK NEEDED"]?.trim() || "",
-  }));
+  // Optional: see what headers look like after normalization
+  console.log("CSV headers:", parsed.meta.fields);
 
-  setChemicalOptions(chemicals.filter(c => c.chemical));
+  const chemicals = parsed.data
+    .map((row) => {
+      if (!row) return null;
+
+      const chemical = (row["chemical"] || "").trim();
+      if (!chemical) return null;
+
+      return {
+        chemical,
+        measurement: (row["measurement"] || "").trim(),
+        epaReg: (row["epa reg #"] || "").trim(),
+        wales: (row["wales"] || "").trim(),
+        warn: (row["warnings/ notes"] || "").trim(),
+        ai: (row["ai"] || "").trim(),
+        moA: (row["moa"] || "").trim(),
+        rei: (row["rei"] || "").trim(),
+        function: (row["function"] || "").trim(),
+        stage: (row["stage active"] || "").trim(),
+        irac: (row["chemical class"] || "").trim(),
+        signal: (row["signal word"] || "").trim(),
+        mask: (row["mask needed"] || "").trim(),
+      };
+    })
+    .filter(Boolean);
+
+  setChemicalOptions(chemicals);
 }
-
-
 
       function parseApplicatorCSV(data) {
         const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
@@ -367,6 +388,7 @@ html {
   </script>
 </body>
 </html>
+
 
 
 
