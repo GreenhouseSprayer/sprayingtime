@@ -121,21 +121,23 @@ html {
 
   const chemicals = parsed.data.map(row => ({
     chemical: row["Chemical"]?.trim() || "",
-    epaReg: row["EPA"]?.trim() || "",
-    ai: row["AI"]?.trim() || "",
-    rei: row["REI"]?.trim() || "",
-    function: row["Function"]?.trim() || "",
-    moA: row["MoA"]?.trim() || "",
-    signal: row["Signal"]?.trim() || "",
-    mask: row["Mask"]?.trim() || "",
-    stage: row["Stage Active"]?.trim() || "",
-    warn: row["Warnings"]?.trim() || "",
+    measurement: row["measurement"]?.trim() || "",
+    epaReg: row["EPA REG #"]?.trim() || "",
     wales: row["WALES"]?.trim() || "",
-    measurement: row["Measurement"]?.trim() || "",
+    warn: row["Warnings/ Notes"]?.trim() || "",
+    ai: row["AI"]?.trim() || "",
+    moA: row["Moa"]?.trim() || "",
+    rei: row["REI"]?.trim() || "",
+    function: row["function"]?.trim() || "",
+    stage: row["Stage active"]?.trim() || "",
+    irac: row["chemical class"]?.trim() || "",
+    signal: row["Signal word"]?.trim() || "",
+    mask: row["MASK NEEDED"]?.trim() || "",
   }));
 
   setChemicalOptions(chemicals.filter(c => c.chemical));
 }
+
 
 
       function parseApplicatorCSV(data) {
@@ -365,6 +367,7 @@ html {
   </script>
 </body>
 </html>
+
 
 
 
