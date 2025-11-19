@@ -113,53 +113,47 @@ html {
           .catch(() => {});
       }, []);
 
-      function parseChemicalCSV(data) {
-  // Fallback: if Papa isn't available for some reason, do nothing
-  if (typeof Papa === "undefined") {
-    console.error("PapaParse not loaded");
-    return;
-  }
-
+    function parseChemicalCSV(data) {
   const parsed = Papa.parse(data, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (header) =>
       header
-        .replace(/\u00a0/g, " ") // convert non-breaking spaces to normal
+        .replace(/\uFEFF/g, "")  // remove BOM
+        .replace(/\u00A0/g, " ") // convert non-breaking space
         .trim()
-        .toLowerCase(),          // normalize for easy matching
+        .toLowerCase(),
   });
 
-  // Optional: see what headers look like after normalization
-  console.log("CSV headers:", parsed.meta.fields);
+  console.log("FIELDS:", parsed.meta.fields); // ← PRINT THIS FOR ME
 
-  const chemicals = parsed.data
-    .map((row) => {
-      if (!row) return null;
+  const chemicals = parsed.data.map(row => {
+    const r = {};
+    for (let key in row) {
+      const cleanKey = key.toLowerCase().trim();
+      r[cleanKey] = (row[key] || "").trim();
+    }
 
-      const chemical = (row["chemical"] || "").trim();
-      if (!chemical) return null;
-
-      return {
-        chemical,
-        measurement: (row["measurement"] || "").trim(),
-        epaReg: (row["epa reg #"] || "").trim(),
-        wales: (row["wales"] || "").trim(),
-        warn: (row["warnings/ notes"] || "").trim(),
-        ai: (row["ai"] || "").trim(),
-        moA: (row["moa"] || "").trim(),
-        rei: (row["rei"] || "").trim(),
-        function: (row["function"] || "").trim(),
-        stage: (row["stage active"] || "").trim(),
-        irac: (row["chemical class"] || "").trim(),
-        signal: (row["signal word"] || "").trim(),
-        mask: (row["mask needed"] || "").trim(),
-      };
-    })
-    .filter(Boolean);
+    return {
+      chemical: r["chemical"],
+      measurement: r["measurement"],
+      epaReg: r["epa reg #"],
+      wales: r["wales"],
+      warn: r["warnings/ notes"],
+      ai: r["ai"],
+      moA: r["moa"],
+      rei: r["rei"],
+      function: r["function"],
+      stage: r["stage active"],
+      irac: r["chemical class"],
+      signal: r["signal word"],
+      mask: r["mask needed"],
+    };
+  }).filter(c => c.chemical);
 
   setChemicalOptions(chemicals);
 }
+
 
       function parseApplicatorCSV(data) {
         const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
@@ -388,6 +382,7 @@ html {
   </script>
 </body>
 </html>
+
 
 
 
