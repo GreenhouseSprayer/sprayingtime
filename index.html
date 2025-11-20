@@ -306,64 +306,67 @@ html {
 
           <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-semibold text-xs mb-1">Pests & Diseases</h3>
-
-<div className="grid grid-cols-2 gap-4 text-xs">
-  
-  {/* Left Column — Pests */}
+<div className="grid grid-cols-2 gap-4">
   <div>
-    <h4 className="font-semibold text-xs mb-1 underline">Pests</h4>
-    <div className="flex flex-wrap gap-3">
-      {PESTS.map(p => (
-        <label key={p} className="flex items-center">
-          <input type="checkbox" className="mr-1" /> {p}
-        </label>
-      ))}
+    <h3 className="font-semibold text-xs mb-1">Pests & Diseases</h3>
+
+    <div className="grid grid-cols-2 gap-4 text-xs">
+      
+      {/* Left Column — Pests */}
+      <div>
+        <h4 className="font-semibold text-xs mb-1 underline">Pests</h4>
+        <div className="flex flex-wrap gap-3">
+          {PESTS.map(p => (
+            <label key={p} className="flex items-center">
+              <input type="checkbox" className="mr-1" /> {p}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Right Column — Diseases */}
+      <div>
+        <h4 className="font-semibold text-xs mb-1 underline">Diseases</h4>
+        <div className="flex flex-wrap gap-3">
+          {DISEASES.map(d => (
+            <label key={d} className="flex items-center">
+              <input type="checkbox" className="mr-1" /> {d}
+            </label>
+          ))}
+        </div>
+      </div>
+
+    </div> {/* ← CLOSE inner grid properly */}
+  </div>   {/* ← CLOSE left side column */}
+
+  {/* Right side — PPE */}
+  <div className="ml-6">
+    <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
+    <div className="text-xs space-y-1">
+      {PPE_ITEMS.map((p) => {
+        const needsMask = selectedChems.some(c => {
+          const full = chemicalOptions.find(x => x.chemical === c);
+          return full?.mask?.toLowerCase() === "mask";
+        });
+
+        const isMask = p === "Respirator/Mask";
+
+        return (
+          <label key={p} className="flex items-center">
+            <input
+              type="checkbox"
+              className="mr-1"
+              checked={isMask ? needsMask : undefined}
+              onChange={() => {}}
+            />
+            {p}
+          </label>
+        );
+      })}
     </div>
   </div>
+</div> {/* ← CLOSE outer 2-column grid */}
 
-  {/* Right Column — Diseases */}
-  <div>
-    <h4 className="font-semibold text-xs mb-1 underline">Diseases</h4>
-    <div className="flex flex-wrap gap-3">
-      {DISEASES.map(d => (
-        <label key={d} className="flex items-center">
-          <input type="checkbox" className="mr-1" /> {d}
-        </label>
-      ))}
-    </div>
-  </div>
-
-</div>
-
-            <div className="ml-6">  {/* pushes PPE to the right */}
-  <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
-  <div className="text-xs space-y-1">
-    {PPE_ITEMS.map((p) => {
-      const needsMask = selectedChems.some(c => {
-        const full = chemicalOptions.find(x => x.chemical === c);
-        return full?.mask?.toLowerCase() === "mask";
-      });
-
-      const isMask = p === "Respirator/Mask";
-
-      return (
-        <label key={p} className="flex items-center">
-          <input
-            type="checkbox"
-            className="mr-1"
-            checked={isMask ? needsMask : undefined}
-            onChange={() => {}}
-          />
-          {p}
-        </label>
-      );
-    })}
-  </div>
-</div>
-          </div> {
 
           <div className="mt-4 border-t pt-3">
             <h2 className="font-bold text-sm mb-1">Emergency Information</h2>
@@ -393,6 +396,7 @@ html {
   </script>
 </body>
 </html>
+
 
 
 
