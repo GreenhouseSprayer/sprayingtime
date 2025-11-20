@@ -60,9 +60,8 @@
   <div id="root"></div>
 
   <script type="text/babel">
-
     /* --------------------------------------------------------
-       CLEAN, WORKING ARRAYS
+       ARRAYS
     -------------------------------------------------------- */
     const DISEASES = [
       "Botrytis (Gray Mold)",
@@ -77,11 +76,7 @@
       "Rhizoctonia",
       "Fusarium",
       "Thielaviopsis (Black Root Rot)",
-      "Sclerotinia",
-      "Algae",
-      "Moss",
-      "Liverwort",
-      "Lichens"
+      "Sclerotinia"
     ];
 
     const PESTS = [
@@ -92,8 +87,16 @@
       "Japanese Beetles",
       "Lepidoptera",
       "Fungus Gnats",
-      "Mealy Bugs",
-      "Weed Control"
+      "Mealy Bugs"
+    ];
+
+    const WEED_MGMT = [
+      "Pre-emergent",
+      "Post-emergent",
+      "Lichens",
+      "Liverwort",
+      "Algae",
+      "Moss"
     ];
 
     const PPE_ITEMS = [
@@ -368,46 +371,49 @@
           {/* PESTS & PPE */}
           <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-4 gap-6 text-xs">
 
-            {/* LEFT SIDE */}
+            {/* COLUMN 1 — PESTS */}
             <div>
-              <h3 className="font-semibold text-xs mb-1">Pests & Diseases</h3>
-
-              <div className="grid grid-cols-2 gap-4 text-xs">
-
-                {/* PESTS */}
-                <div>
-                  <h4 className="font-semibold underline text-xs mb-1">Pests</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {PESTS.map(p => (
-                      <label key={p} className="flex items-center">
-                        <input type="checkbox" className="mr-1" /> {p}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* DISEASES */}
-                <div>
-                  <h4 className="font-semibold underline text-xs mb-1">Diseases</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {DISEASES.map(d => (
-                      <label key={d} className="flex items-center">
-                        <input type="checkbox" className="mr-1" /> {d}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
+              <h3 className="font-semibold mb-1 underline">Pests</h3>
+              <div className="space-y-1">
+                {PESTS.map(p => (
+                  <label key={p} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {p}
+                  </label>
+                ))}
               </div>
             </div>
 
-            {/* PPE SECTION */}
-            <div className="ml-6">
-              <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
+            {/* COLUMN 2 — DISEASES */}
+            <div>
+              <h3 className="font-semibold mb-1 underline">Diseases</h3>
+              <div className="space-y-1">
+                {DISEASES.map(d => (
+                  <label key={d} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {d}
+                  </label>
+                ))}
+              </div>
+            </div>
 
-              <div className="text-xs space-y-1">
+            {/* COLUMN 3 — WEED MANAGEMENT */}
+            <div>
+              <h3 className="font-semibold mb-1 underline">Weed Management</h3>
+              <div className="space-y-1">
+                {WEED_MGMT.map(w => (
+                  <label key={w} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {w}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* COLUMN 4 — PPE */}
+            <div className="ml-4">
+              <h3 className="font-semibold mb-1 underline">Required PPE</h3>
+
+              <div className="space-y-1">
                 {PPE_ITEMS.map(item => {
                   const needsMask = selectedChems.some(c => {
                     const full = chemicalOptions.find(x => x.chemical === c);
@@ -461,10 +467,10 @@
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(<SprayPlanBuilder />);
-
   </script>
 </body>
 </html>
+
 
 
 
