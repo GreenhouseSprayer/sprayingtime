@@ -12,8 +12,6 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
@@ -31,18 +29,30 @@
       }
     }
 
-    body { font-size: 12px; }
-    table th, table td { padding: 2px !important; }
-    table td, table th { white-space: normal; vertical-align: top; }
+    body {
+      font-size: 12px;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    table th,
+    table td {
+      padding: 2px !important;
+    }
 
     .compact-input {
       padding: 2px !important;
       font-size: 12px !important;
     }
 
-    body { max-width: 100vw; overflow-x: hidden; }
-    html { font-size: 14px; }
-    @media (min-width:1024px) { html { font-size:16px; } }
+    html {
+      font-size: 14px;
+    }
+    @media (min-width: 1024px) {
+      html {
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 
@@ -51,10 +61,9 @@
 
   <script type="text/babel">
 
-    const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
-    const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment", "Drone"];
-
-    /* ✅ CLEAN, WORKING ARRAYS */
+    /* --------------------------------------------------------
+       CLEAN, WORKING ARRAYS
+    -------------------------------------------------------- */
     const DISEASES = [
       "Botrytis (Gray Mold)",
       "Powdery Mildew",
@@ -97,6 +106,12 @@
       "Protective Eyewear"
     ];
 
+    const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
+    const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment", "Drone"];
+
+    /* --------------------------------------------------------
+       MAIN COMPONENT
+    -------------------------------------------------------- */
     function SprayPlanBuilder() {
       const [chemicalOptions, setChemicalOptions] = React.useState([]);
       const [applicators, setApplicators] = React.useState(DEFAULT_APPLICATORS);
@@ -105,7 +120,6 @@
       const [method, setMethod] = React.useState("");
       const [error, setError] = React.useState("");
 
-      /* CSV URLs */
       const chemicalSheetUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
 
@@ -114,55 +128,72 @@
 
       React.useEffect(() => {
         fetch(chemicalSheetUrl)
-          .then(r => r.text())
+          .then(res => res.text())
           .then(parseChemicalCSV)
-          .catch(() => setError("Unable to fetch chemical sheet — upload CSV manually."));
+          .catch(() =>
+            setError("Unable to fetch chemical sheet — upload CSV manually.")
+          );
 
         fetch(applicatorSheetUrl)
-          .then(r => r.text())
+          .then(res => res.text())
           .then(parseApplicatorCSV)
           .catch(() => {});
       }, []);
 
-      /* CSV PARSE — CLEAN AND WORKING */
+      /* --------------------------------------------------------
+         PARSE CHEMICAL CSV
+      -------------------------------------------------------- */
       function parseChemicalCSV(data) {
         const parsed = Papa.parse(data, {
           header: true,
           skipEmptyLines: true,
-          transformHeader: (h) =>
-            h.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase(),
+          transformHeader: (header) =>
+            header
+              .replace(/\uFEFF/g, "")
+              .replace(/\u00A0/g, " ")
+              .trim()
+              .toLowerCase(),
         });
 
-        const chemicals = parsed.data.map(row => {
-          const r = {};
-          for (let key in row) r[key.toLowerCase().trim()] = (row[key] || "").trim();
+        const chemicals = parsed.data
+          .map(row => {
+            const clean = {};
+            for (let k in row) clean[k.toLowerCase().trim()] = (row[k] || "").trim();
 
-          return {
-            chemical: r["chemical"],
-            measurement: r["measurement"],
-            epaReg: r["epa reg #"],
-            wales: r["wales"],
-            warn: r["warnings/ notes"],
-            ai: r["ai"],
-            moA: r["moa"],
-            rei: r["rei"],
-            function: r["function"],
-            stage: r["stage active"],
-            irac: r["chemical class"],
-            signal: r["signal word"],
-            mask: r["mask needed"],
-          };
-        }).filter(c => c.chemical);
+            return {
+              chemical: clean["chemical"],
+              measurement: clean["measurement"],
+              epaReg: clean["epa reg #"],
+              wales: clean["wales"],
+              warn: clean["warnings/ notes"],
+              ai: clean["ai"],
+              moA: clean["moa"],
+              rei: clean["rei"],
+              function: clean["function"],
+              stage: clean["stage active"],
+              irac: clean["chemical class"],
+              signal: clean["signal word"],
+              mask: clean["mask needed"]
+            };
+          })
+          .filter(c => c.chemical);
 
         setChemicalOptions(chemicals);
       }
 
+      /* --------------------------------------------------------
+         PARSE APPLICATORS
+      -------------------------------------------------------- */
       function parseApplicatorCSV(data) {
         const rows = data.split(/\r?\n/).filter(r => r.trim());
-        const list = rows.slice(1).map(r => r.split(",").at(-1).trim());
+        const parsed = rows.map(r => r.split(","));
+        const list = parsed.slice(1).map(cols => cols[cols.length - 1]?.trim());
         if (list.length) setApplicators(list);
       }
 
+      /* --------------------------------------------------------
+         FILE UPLOAD
+      -------------------------------------------------------- */
       const handleCSVUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -171,10 +202,13 @@
         reader.readAsText(file);
       };
 
+      /* --------------------------------------------------------
+         RENDER
+      -------------------------------------------------------- */
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
 
-          <!-- HEADER -->
+          {/* HEADER */}
           <div className="flex items-center gap-3">
             <img src="GardensAliveLogo.png" className="h-16" />
             <h1 className="text-2xl font-bold">Spray Plan</h1>
@@ -183,16 +217,23 @@
           {error && (
             <div className="bg-red-200 text-red-900 p-2 rounded">
               {error}
-              <input type="file" accept=".csv" onChange={handleCSVUpload} />
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleCSVUpload}
+                className="mt-1"
+              />
             </div>
           )}
 
-          <button className="bg-blue-500 text-white px-3 py-1 rounded"
-            onClick={() => window.print()}>
+          <button
+            onClick={() => window.print()}
+            className="bg-blue-500 text-white px-3 py-1 rounded"
+          >
             Print / Save PDF
           </button>
 
-          <!-- TOP FORM -->
+          {/* TOP FORM */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs">Date & Time</label>
@@ -206,28 +247,35 @@
 
             <div>
               <label className="text-xs">Applicator</label>
-              <select className="w-full border compact-input rounded"
-                      value={applicator}
-                      onChange={e => setApplicator(e.target.value)}>
+              <select
+                className="w-full border compact-input rounded"
+                value={applicator}
+                onChange={(e) => setApplicator(e.target.value)}
+              >
                 <option value="">Select Applicator...</option>
-                {applicators.map(a => <option key={a}>{a}</option>)}
+                {applicators.map(a => (
+                  <option key={a}>{a}</option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="text-xs">Method</label>
-              <select className="w-full border compact-input rounded"
-                      value={method}
-                      onChange={e => setMethod(e.target.value)}>
+              <select
+                className="w-full border compact-input rounded"
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+              >
                 <option value="">Select Method...</option>
-                {DEFAULT_METHODS.map(m => <option key={m}>{m}</option>)}
+                {DEFAULT_METHODS.map(m => (
+                  <option key={m}>{m}</option>
+                ))}
               </select>
             </div>
           </div>
 
-          <!-- CHEMICALS -->
+          {/* CHEMICALS */}
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
-
           <table className="w-full border text-xs">
             <thead className="bg-gray-200">
               <tr>
@@ -244,20 +292,23 @@
                 return (
                   <tr key={i}>
                     <td className="border">
-                      <select className="w-full border compact-input rounded"
+                      <select
+                        className="w-full border compact-input rounded"
                         value={chem}
                         onChange={e => {
-                          const newList = [...selectedChems];
-                          newList[i] = e.target.value;
-                          setSelectedChems(newList);
-                        }}>
+                          const copy = [...selectedChems];
+                          copy[i] = e.target.value;
+                          setSelectedChems(copy);
+                        }}
+                      >
                         <option value="">Select...</option>
-                        {chemicalOptions.map(c =>
-                          <option key={c.chemical}>{c.chemical}</option>
-                        )}
+                        {chemicalOptions.map(c => (
+                          <option key={c.chemical} value={c.chemical}>
+                            {c.chemical}
+                          </option>
+                        ))}
                       </select>
                     </td>
-
                     <td className="border">{full?.epaReg}</td>
                     <td className="border">{full?.ai}</td>
                     <td className="border">{full?.rei}</td>
@@ -268,10 +319,10 @@
             </tbody>
           </table>
 
-          <!-- SAFETY -->
+          {/* SAFETY INFO */}
           <h2 className="font-semibold mt-2 text-sm">Chemical Safety Information</h2>
 
-          <div className="font-semibold text-xs mb-1">
+          <div className="font-semibold text-xs">
             Signal Word (Most Restrictive):{" "}
             <span className="font-bold">
               {(() => {
@@ -297,6 +348,7 @@
                 <th className="border">WALES</th>
               </tr>
             </thead>
+
             <tbody>
               {selectedChems.map((chem, i) => {
                 const full = chemicalOptions.find(c => c.chemical === chem);
@@ -313,20 +365,20 @@
             </tbody>
           </table>
 
-          <!-- PESTS + PPE -->
+          {/* PESTS & PPE */}
           <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
 
           <div className="grid grid-cols-2 gap-4">
 
-            <!-- LEFT SECTION -->
+            {/* LEFT SIDE */}
             <div>
               <h3 className="font-semibold text-xs mb-1">Pests & Diseases</h3>
 
               <div className="grid grid-cols-2 gap-4 text-xs">
 
-                <!-- PESTS -->
+                {/* PESTS */}
                 <div>
-                  <h4 className="font-semibold text-xs underline mb-1">Pests</h4>
+                  <h4 className="font-semibold underline text-xs mb-1">Pests</h4>
                   <div className="flex flex-wrap gap-3">
                     {PESTS.map(p => (
                       <label key={p} className="flex items-center">
@@ -336,9 +388,9 @@
                   </div>
                 </div>
 
-                <!-- DISEASES -->
+                {/* DISEASES */}
                 <div>
-                  <h4 className="font-semibold text-xs underline mb-1">Diseases</h4>
+                  <h4 className="font-semibold underline text-xs mb-1">Diseases</h4>
                   <div className="flex flex-wrap gap-3">
                     {DISEASES.map(d => (
                       <label key={d} className="flex items-center">
@@ -351,37 +403,37 @@
               </div>
             </div>
 
-            <!-- PPE -->
+            {/* PPE SECTION */}
             <div className="ml-6">
               <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
+
               <div className="text-xs space-y-1">
-                {PPE_ITEMS.map(p => {
+                {PPE_ITEMS.map(item => {
                   const needsMask = selectedChems.some(c => {
                     const full = chemicalOptions.find(x => x.chemical === c);
                     return full?.mask?.toLowerCase() === "mask";
                   });
 
-                  const isMask = p === "Respirator/Mask";
+                  const isMask = item === "Respirator/Mask";
 
                   return (
-                    <label key={p} className="flex items-center">
+                    <label key={item} className="flex items-center">
                       <input
                         type="checkbox"
                         className="mr-1"
                         checked={isMask ? needsMask : undefined}
                         onChange={() => {}}
                       />
-                      {p}
+                      {item}
                     </label>
                   );
                 })}
               </div>
             </div>
-
           </div>
 
-          <!-- EMERGENCY -->
-          <div className="mt-4 border-t pt-3">
+          {/* EMERGENCY */}
+          <div className="border-t pt-3 mt-4">
             <h2 className="font-bold text-sm mb-1">Emergency Information</h2>
             <div className="border p-2 rounded bg-red-50 text-xs">
               <p><strong>In an emergency, contact:</strong> 911</p>
@@ -389,33 +441,30 @@
             </div>
           </div>
 
-          <!-- TOTAL SPRAYED -->
+          {/* TOTAL SPRAYED */}
           <h2 className="font-semibold text-sm mt-3">Total Amount Sprayed</h2>
-          <input type="text" className="w-full border rounded p-2 compact-input"
-            placeholder="Enter total volume applied (e.g. 25 gallons)" />
+          <input
+            type="text"
+            className="w-full border rounded p-2 compact-input"
+            placeholder="Enter total volume applied (e.g. 25 gallons)"
+          />
 
-          <!-- WHAT WAS TREATED -->
+          {/* WHAT WAS TREATED */}
           <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
-          <textarea className="w-full border rounded p-2 compact-input" rows="2"
-            placeholder="Enter crop, block, or greenhouse zones treated..." />
-
+          <textarea
+            className="w-full border rounded p-2 compact-input"
+            rows="2"
+            placeholder="Enter crop, block, or greenhouse zones treated..."
+          ></textarea>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root"))
-      .render(<SprayPlanBuilder />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<SprayPlanBuilder />);
 
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
 
 
 
