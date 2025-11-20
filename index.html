@@ -74,12 +74,12 @@ html {
 
   <script type="text/babel">
     const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
-    const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment"];
+    const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment","Drone" ];
 
     const PESTS = [
-      "Aphids", "Mites", "Thrips", "White Flies", "Rose Beetles",
-      "Fungal Gnats", "Mealy Bugs", "Botrytis", "Powdery Mildew", "Rust",
-      "Algae", "Moss", "Liverwort", "Lichens"
+      "Aphids", "Mites", "Thrips", "White Flies", "Japanese Beetles", "Lepidoptera",
+      "Fungus Gnats", "Mealy Bugs", "Botrytis", "Root Rots", "Powdery Mildew", "Rust",
+      "Algae", "Moss", "Liverwort", "Weed Control"
     ];
 
     const PPE_ITEMS = [
@@ -308,24 +308,35 @@ html {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="font-semibold text-xs mb-1">Pests Targeted</h3>
-              <div className="text-xs space-y-1">
-                <div className="flex flex-wrap gap-x-4">
-                  {PESTS.slice(0, pestMid).map(p => (
-                    <label key={p} className="flex items-center">
-                      <input type="checkbox" className="mr-1" /> {p}
-                    </label>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-x-4">
-                  {PESTS.slice(pestMid).map(p => (
-                    <label key={p} className="flex items-center">
-                      <input type="checkbox" className="mr-1" /> {p}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
+              <h3 className="font-semibold text-xs mb-1">Pests & Diseases</h3>
+
+<div className="grid grid-cols-2 gap-4 text-xs">
+  
+  {/* Left Column — Pests */}
+  <div>
+    <h4 className="font-semibold text-xs mb-1 underline">Pests</h4>
+    <div className="flex flex-wrap gap-3">
+      {PESTS.map(p => (
+        <label key={p} className="flex items-center">
+          <input type="checkbox" className="mr-1" /> {p}
+        </label>
+      ))}
+    </div>
+  </div>
+
+  {/* Right Column — Diseases */}
+  <div>
+    <h4 className="font-semibold text-xs mb-1 underline">Diseases</h4>
+    <div className="flex flex-wrap gap-3">
+      {DISEASES.map(d => (
+        <label key={d} className="flex items-center">
+          <input type="checkbox" className="mr-1" /> {d}
+        </label>
+      ))}
+    </div>
+  </div>
+
+</div>
 
             <div>
               <h3 className="font-semibold text-xs mb-1">Required PPE</h3>
@@ -382,6 +393,7 @@ html {
   </script>
 </body>
 </html>
+
 
 
 
