@@ -49,9 +49,7 @@
       font-size: 14px;
     }
     @media (min-width: 1024px) {
-      html {
-        font-size: 16px;
-      }
+      html { font-size: 16px; }
     }
   </style>
 </head>
@@ -60,23 +58,18 @@
   <div id="root"></div>
 
   <script type="text/babel">
+
     /* --------------------------------------------------------
-       ARRAYS
+       CLEAN UPDATED ARRAYS
     -------------------------------------------------------- */
+
     const DISEASES = [
       "Botrytis (Gray Mold)",
       "Powdery Mildew",
       "Downy Mildew",
       "Rust",
-      "Alternaria Leaf Spot",
-      "Cercospora Leaf Spot",
-      "Septoria Leaf Spot",
-      "Pythium Root Rot",
-      "Phytophthora Root/Crown Rot",
-      "Rhizoctonia",
-      "Fusarium",
-      "Thielaviopsis (Black Root Rot)",
-      "Sclerotinia"
+      "Leaf Spot Diseases",
+      "Root Rot Diseases"
     ];
 
     const PESTS = [
@@ -90,7 +83,7 @@
       "Mealy Bugs"
     ];
 
-    const WEED_MGMT = [
+    const WEED_MANAGEMENT = [
       "Pre-emergent",
       "Post-emergent",
       "Lichens",
@@ -116,6 +109,7 @@
        MAIN COMPONENT
     -------------------------------------------------------- */
     function SprayPlanBuilder() {
+
       const [chemicalOptions, setChemicalOptions] = React.useState([]);
       const [applicators, setApplicators] = React.useState(DEFAULT_APPLICATORS);
       const [selectedChems, setSelectedChems] = React.useState(["", "", "", ""]);
@@ -133,9 +127,7 @@
         fetch(chemicalSheetUrl)
           .then(res => res.text())
           .then(parseChemicalCSV)
-          .catch(() =>
-            setError("Unable to fetch chemical sheet — upload CSV manually.")
-          );
+          .catch(() => setError("Unable to fetch chemical sheet — upload CSV manually."));
 
         fetch(applicatorSheetUrl)
           .then(res => res.text())
@@ -151,11 +143,7 @@
           header: true,
           skipEmptyLines: true,
           transformHeader: (header) =>
-            header
-              .replace(/\uFEFF/g, "")
-              .replace(/\u00A0/g, " ")
-              .trim()
-              .toLowerCase(),
+            header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase()
         });
 
         const chemicals = parsed.data
@@ -197,7 +185,7 @@
       /* --------------------------------------------------------
          FILE UPLOAD
       -------------------------------------------------------- */
-      const handleCSVUpload = (e) => {
+      const handleCSVUpload = e => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -220,19 +208,11 @@
           {error && (
             <div className="bg-red-200 text-red-900 p-2 rounded">
               {error}
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleCSVUpload}
-                className="mt-1"
-              />
+              <input type="file" accept=".csv" onChange={handleCSVUpload} className="mt-1" />
             </div>
           )}
 
-          <button
-            onClick={() => window.print()}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-          >
+          <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => window.print()}>
             Print / Save PDF
           </button>
 
@@ -250,29 +230,19 @@
 
             <div>
               <label className="text-xs">Applicator</label>
-              <select
-                className="w-full border compact-input rounded"
-                value={applicator}
-                onChange={(e) => setApplicator(e.target.value)}
-              >
+              <select className="w-full border compact-input rounded" value={applicator}
+                onChange={e => setApplicator(e.target.value)}>
                 <option value="">Select Applicator...</option>
-                {applicators.map(a => (
-                  <option key={a}>{a}</option>
-                ))}
+                {applicators.map(a => <option key={a}>{a}</option>)}
               </select>
             </div>
 
             <div>
               <label className="text-xs">Method</label>
-              <select
-                className="w-full border compact-input rounded"
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-              >
+              <select className="w-full border compact-input rounded" value={method}
+                onChange={e => setMethod(e.target.value)}>
                 <option value="">Select Method...</option>
-                {DEFAULT_METHODS.map(m => (
-                  <option key={m}>{m}</option>
-                ))}
+                {DEFAULT_METHODS.map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
           </div>
@@ -289,27 +259,24 @@
                 <th className="border">MoA</th>
               </tr>
             </thead>
+
             <tbody>
               {selectedChems.map((chem, i) => {
                 const full = chemicalOptions.find(c => c.chemical === chem);
                 return (
                   <tr key={i}>
                     <td className="border">
-                      <select
-                        className="w-full border compact-input rounded"
+                      <select className="w-full border compact-input rounded"
                         value={chem}
                         onChange={e => {
                           const copy = [...selectedChems];
                           copy[i] = e.target.value;
                           setSelectedChems(copy);
-                        }}
-                      >
+                        }}>
                         <option value="">Select...</option>
-                        {chemicalOptions.map(c => (
-                          <option key={c.chemical} value={c.chemical}>
-                            {c.chemical}
-                          </option>
-                        ))}
+                        {chemicalOptions.map(c =>
+                          <option key={c.chemical} value={c.chemical}>{c.chemical}</option>
+                        )}
                       </select>
                     </td>
                     <td className="border">{full?.epaReg}</td>
@@ -325,14 +292,13 @@
           {/* SAFETY INFO */}
           <h2 className="font-semibold mt-2 text-sm">Chemical Safety Information</h2>
 
-          <div className="font-semibold text-xs">
+          <div className="text-xs font-semibold">
             Signal Word (Most Restrictive):{" "}
             <span className="font-bold">
               {(() => {
                 const words = selectedChems
                   .map(c => chemicalOptions.find(x => x.chemical === c)?.signal || "")
                   .filter(Boolean);
-
                 if (words.includes("DANGER")) return "DANGER";
                 if (words.includes("WARNING")) return "WARNING";
                 if (words.includes("CAUTION")) return "CAUTION";
@@ -368,58 +334,56 @@
             </tbody>
           </table>
 
-          {/* PESTS & PPE */}
-          <h2 className="font-semibold mt-2 text-sm">Pests & PPE</h2>
+          {/* PESTS, DISEASES, WEED MGMT, PPE */}
+          <h2 className="font-semibold mt-2 text-sm">Pests, Diseases & PPE</h2>
 
-          <div className="grid grid-cols-4 gap-6 text-xs">
+          <div className="grid grid-cols-4 gap-4">
 
-            {/* COLUMN 1 — PESTS */}
+            {/* PESTS */}
             <div>
-              <h3 className="font-semibold mb-1 underline">Pests</h3>
-              <div className="space-y-1">
-                {PESTS.map(p => (
-                  <label key={p} className="flex items-center">
-                    <input type="checkbox" className="mr-1" /> {p}
+              <h4 className="font-semibold underline text-xs mb-1">Pests</h4>
+              <div className="flex flex-col gap-1 text-xs">
+                {PESTS.map(item => (
+                  <label key={item} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {item}
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* COLUMN 2 — DISEASES */}
+            {/* DISEASES */}
             <div>
-              <h3 className="font-semibold mb-1 underline">Diseases</h3>
-              <div className="space-y-1">
-                {DISEASES.map(d => (
-                  <label key={d} className="flex items-center">
-                    <input type="checkbox" className="mr-1" /> {d}
+              <h4 className="font-semibold underline text-xs mb-1">Diseases</h4>
+              <div className="flex flex-col gap-1 text-xs">
+                {DISEASES.map(item => (
+                  <label key={item} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {item}
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* COLUMN 3 — WEED MANAGEMENT */}
+            {/* WEED MANAGEMENT */}
             <div>
-              <h3 className="font-semibold mb-1 underline">Weed Management</h3>
-              <div className="space-y-1">
-                {WEED_MGMT.map(w => (
-                  <label key={w} className="flex items-center">
-                    <input type="checkbox" className="mr-1" /> {w}
+              <h4 className="font-semibold underline text-xs mb-1">Weed Management</h4>
+              <div className="flex flex-col gap-1 text-xs">
+                {WEED_MANAGEMENT.map(item => (
+                  <label key={item} className="flex items-center">
+                    <input type="checkbox" className="mr-1" /> {item}
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* COLUMN 4 — PPE */}
-            <div className="ml-4">
-              <h3 className="font-semibold mb-1 underline">Required PPE</h3>
-
-              <div className="space-y-1">
+            {/* PPE */}
+            <div>
+              <h4 className="font-semibold text-xs mb-1 ml-4">Required PPE</h4>
+              <div className="flex flex-col gap-1 text-xs ml-4">
                 {PPE_ITEMS.map(item => {
                   const needsMask = selectedChems.some(c => {
-                    const full = chemicalOptions.find(x => x.chemical === c);
-                    return full?.mask?.toLowerCase() === "mask";
+                    const f = chemicalOptions.find(x => x.chemical === c);
+                    return f?.mask?.toLowerCase() === "mask";
                   });
-
                   const isMask = item === "Respirator/Mask";
 
                   return (
@@ -436,6 +400,7 @@
                 })}
               </div>
             </div>
+
           </div>
 
           {/* EMERGENCY */}
@@ -449,27 +414,24 @@
 
           {/* TOTAL SPRAYED */}
           <h2 className="font-semibold text-sm mt-3">Total Amount Sprayed</h2>
-          <input
-            type="text"
-            className="w-full border rounded p-2 compact-input"
-            placeholder="Enter total volume applied (e.g. 25 gallons)"
-          />
+          <input type="text" className="w-full border rounded p-2 compact-input"
+            placeholder="Enter total volume applied (e.g. 25 gallons)" />
 
           {/* WHAT WAS TREATED */}
           <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
-          <textarea
-            className="w-full border rounded p-2 compact-input"
-            rows="2"
-            placeholder="Enter crop, block, or greenhouse zones treated..."
-          ></textarea>
+          <textarea className="w-full border rounded p-2 compact-input" rows="2"
+            placeholder="Enter crop, block, or greenhouse zones treated..."></textarea>
+
         </div>
       );
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(<SprayPlanBuilder />);
+
   </script>
 </body>
 </html>
+
 
 
 
