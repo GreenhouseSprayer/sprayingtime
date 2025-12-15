@@ -421,6 +421,14 @@
           <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
           <textarea className="w-full border rounded p-2 compact-input" rows="2"
             placeholder="Enter crop, block, or greenhouse zones treated..."></textarea>
+ {/* FOOTER / CREDIT */}
+          <div className="text-center text-[10px] text-gray-500 mt-4 pt-2 border-t">
+            Page formatted by <span className="font-semibold">Jacob Imel</span>.{" "}
+            For questions email{" "}
+            <a href="mailto:Jimel@gardensalive.com" className="underline">
+              Jimel@gardensalive.com
+            </a>.
+          </div>
 
         </div>
       );
@@ -431,6 +439,16 @@
   </script>
 </body>
 </html>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<SprayPlanBuilder />);
+
+  </script>
+</body>
+</html>
+
 
 
 
