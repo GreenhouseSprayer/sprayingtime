@@ -266,19 +266,7 @@
             </button>
           </div>
 
-          {/* ✅ METHOD + EQUIPMENT SUMMARY BLOCK (ADDED) */}
-          <div className="grid grid-cols-2 text-xs text-gray-700 border-b pb-1 mb-2">
-            <div>
-              <span className="font-semibold">Application Method:</span>{" "}
-              {method || "—"}
-            </div>
-            <div>
-              <span className="font-semibold">Equipment:</span>{" "}
-              {equipment || "—"}
-            </div>
-          </div>
-
-          {error && (
+                  {error && (
             <div className="bg-red-200 text-red-900 p-2 rounded">
               {error}
               <input type="file" accept=".csv" onChange={handleCSVUpload} className="mt-1" />
@@ -533,6 +521,7 @@
   </script>
 </body>
 </html>
+
 
 
 
