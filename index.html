@@ -16,17 +16,9 @@
 
   <style>
     @media print {
-      button, input[type="file"] {
-        display: none !important;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        font-size: 10px;
-      }
-      table {
-        page-break-inside: avoid;
-      }
+      button, input[type="file"] { display: none !important; }
+      body { margin: 0; padding: 0; font-size: 10px; }
+      table { page-break-inside: avoid; }
     }
 
     body {
@@ -35,10 +27,7 @@
       overflow-x: hidden;
     }
 
-    table th,
-    table td {
-      padding: 2px !important;
-    }
+    table th, table td { padding: 2px !important; }
 
     .compact-input {
       padding: 2px !important;
@@ -102,13 +91,14 @@
     const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
     const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment"];
     const DEFAULT_EQUIPMENT = [
-  "Drone",
-  "Hagie Sprayer",
-  "Air-Blast Mist Sprayer",
-  "Herbicide Boom Sprayer",
-  "Vicon Spreader",
-  "Hurricane Sprayer"
-];
+      "Drone",
+      "Hagie Sprayer",
+      "Air-Blast Mist Sprayer",
+      "Herbicide Boom Sprayer",
+      "Vicon Spreader",
+      "Hurricane Sprayer"
+    ];
+
     const ACCESS_PASSWORD = "spraytime";
 
     /* --------------------------------------------------------
@@ -120,6 +110,7 @@
       const [selectedChems, setSelectedChems] = React.useState(["", "", "", ""]);
       const [applicator, setApplicator] = React.useState("");
       const [method, setMethod] = React.useState("");
+      const [equipment, setEquipment] = React.useState("");   // ✅ ADDED
       const [error, setError] = React.useState("");
 
       // 🔒 simple gate
@@ -251,7 +242,7 @@
       }
 
       /* --------------------------------------------------------
-         APP UI (UNCHANGED)
+         APP UI
       -------------------------------------------------------- */
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
@@ -273,6 +264,18 @@
             >
               Lock
             </button>
+          </div>
+
+          {/* ✅ METHOD + EQUIPMENT SUMMARY BLOCK (ADDED) */}
+          <div className="grid grid-cols-2 text-xs text-gray-700 border-b pb-1 mb-2">
+            <div>
+              <span className="font-semibold">Application Method:</span>{" "}
+              {method || "—"}
+            </div>
+            <div>
+              <span className="font-semibold">Equipment:</span>{" "}
+              {equipment || "—"}
+            </div>
           </div>
 
           {error && (
@@ -300,8 +303,11 @@
 
             <div>
               <label className="text-xs">Applicator</label>
-              <select className="w-full border compact-input rounded" value={applicator}
-                onChange={e => setApplicator(e.target.value)}>
+              <select
+                className="w-full border compact-input rounded"
+                value={applicator}
+                onChange={e => setApplicator(e.target.value)}
+              >
                 <option value="">Select Applicator...</option>
                 {applicators.map(a => <option key={a}>{a}</option>)}
               </select>
@@ -309,10 +315,26 @@
 
             <div>
               <label className="text-xs">Method</label>
-              <select className="w-full border compact-input rounded" value={method}
-                onChange={e => setMethod(e.target.value)}>
+              <select
+                className="w-full border compact-input rounded"
+                value={method}
+                onChange={e => setMethod(e.target.value)}
+              >
                 <option value="">Select Method...</option>
                 {DEFAULT_METHODS.map(m => <option key={m}>{m}</option>)}
+              </select>
+            </div>
+
+            {/* ✅ EQUIPMENT DROPDOWN (ADDED) */}
+            <div>
+              <label className="text-xs">Equipment</label>
+              <select
+                className="w-full border compact-input rounded"
+                value={equipment}
+                onChange={e => setEquipment(e.target.value)}
+              >
+                <option value="">Select Equipment...</option>
+                {DEFAULT_EQUIPMENT.map(eq => <option key={eq}>{eq}</option>)}
               </select>
             </div>
           </div>
@@ -336,17 +358,19 @@
                 return (
                   <tr key={i}>
                     <td className="border">
-                      <select className="w-full border compact-input rounded"
+                      <select
+                        className="w-full border compact-input rounded"
                         value={chem}
                         onChange={e => {
                           const copy = [...selectedChems];
                           copy[i] = e.target.value;
                           setSelectedChems(copy);
-                        }}>
+                        }}
+                      >
                         <option value="">Select...</option>
-                        {chemicalOptions.map(c =>
+                        {chemicalOptions.map(c => (
                           <option key={c.chemical} value={c.chemical}>{c.chemical}</option>
-                        )}
+                        ))}
                       </select>
                     </td>
                     <td className="border">{full?.epaReg}</td>
@@ -478,13 +502,19 @@
 
           {/* TOTAL SPRAYED */}
           <h2 className="font-semibold text-sm mt-3">Total Amount Sprayed</h2>
-          <input type="text" className="w-full border rounded p-2 compact-input"
-            placeholder="Enter total volume applied (e.g. 25 gallons)" />
+          <input
+            type="text"
+            className="w-full border rounded p-2 compact-input"
+            placeholder="Enter total volume applied (e.g. 25 gallons)"
+          />
 
           {/* WHAT WAS TREATED */}
           <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
-          <textarea className="w-full border rounded p-2 compact-input" rows="2"
-            placeholder="Enter crop, block, or greenhouse zones treated..."></textarea>
+          <textarea
+            className="w-full border rounded p-2 compact-input"
+            rows="2"
+            placeholder="Enter crop, block, or greenhouse zones treated..."
+          ></textarea>
 
           {/* FOOTER / CREDIT */}
           <div className="text-center text-[10px] text-gray-500 mt-4 pt-2 border-t">
@@ -503,14 +533,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
 
 
 
