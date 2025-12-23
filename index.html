@@ -301,19 +301,63 @@
               </select>
             </div>
 
-            <div>
-              <label className="text-xs">Method</label>
-              <select
-                className="w-full border compact-input rounded"
-                value={method}
-                onChange={e => setMethod(e.target.value)}
-              >
-                <option value="">Select Method...</option>
-                {DEFAULT_METHODS.map(m => <option key={m}>{m}</option>)}
-              </select>
-            </div>
+            <div className="grid grid-cols-2 gap-2">
 
-            {/* ✅ EQUIPMENT DROPDOWN (ADDED) */}
+  {/* LEFT COLUMN — METHOD + WEATHER */}
+  <div className="space-y-1">
+    <label className="text-xs font-semibold">Method</label>
+    <select
+      className="w-full border compact-input rounded"
+      value={method}
+      onChange={e => setMethod(e.target.value)}
+    >
+      <option value="">Select Method...</option>
+      {DEFAULT_METHODS.map(m => (
+        <option key={m}>{m}</option>
+      ))}
+    </select>
+
+    {/* Weather row */}
+    <div className="grid grid-cols-2 gap-1">
+      <div>
+        <label className="text-[10px] text-gray-600">Wind Speed</label>
+        <input
+          type="text"
+          className="w-full border compact-input rounded"
+          placeholder="mph"
+        />
+      </div>
+
+      <div>
+        <label className="text-[10px] text-gray-600">
+          Direction / Temp
+        </label>
+        <input
+          type="text"
+          className="w-full border compact-input rounded"
+          placeholder="N @ 72°F"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* RIGHT COLUMN — EQUIPMENT */}
+  <div>
+    <label className="text-xs font-semibold">Equipment</label>
+    <select
+      className="w-full border compact-input rounded"
+    >
+      <option value="">Select Equipment...</option>
+      {DEFAULT_EQUIPMENT.map(eq => (
+        <option key={eq}>{eq}</option>
+      ))}
+    </select>
+  </div>
+
+</div>
+
+
+            {/*  EQUIPMENT DROPDOWN (ADDED) */}
             <div>
               <label className="text-xs">Equipment</label>
               <select
@@ -521,6 +565,7 @@
   </script>
 </body>
 </html>
+
 
 
 
