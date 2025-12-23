@@ -45,9 +45,7 @@
       font-size: 12px !important;
     }
 
-    html {
-      font-size: 14px;
-    }
+    html { font-size: 14px; }
     @media (min-width: 1024px) {
       html { font-size: 16px; }
     }
@@ -58,7 +56,6 @@
   <div id="root"></div>
 
   <script type="text/babel">
-
     /* --------------------------------------------------------
        CLEAN UPDATED ARRAYS
     -------------------------------------------------------- */
@@ -69,7 +66,7 @@
       "Rusts",
       "Leaf Spot Diseases",
       "Root Rot Diseases"
-          ];
+    ];
 
     const PESTS = [
       "Aphids",
@@ -105,17 +102,25 @@
     const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
     const DEFAULT_METHODS = ["Foliar", "Drench", "Broadcast", "Spot Treatment", "Drone"];
 
+    const ACCESS_PASSWORD = "spraytime";
+
     /* --------------------------------------------------------
        MAIN COMPONENT
     -------------------------------------------------------- */
     function SprayPlanBuilder() {
-
       const [chemicalOptions, setChemicalOptions] = React.useState([]);
       const [applicators, setApplicators] = React.useState(DEFAULT_APPLICATORS);
       const [selectedChems, setSelectedChems] = React.useState(["", "", "", ""]);
       const [applicator, setApplicator] = React.useState("");
       const [method, setMethod] = React.useState("");
       const [error, setError] = React.useState("");
+
+      // 🔒 simple gate
+      const [isAuthorized, setIsAuthorized] = React.useState(
+        localStorage.getItem("spraytime_auth") === "true"
+      );
+      const [pw, setPw] = React.useState("");
+      const [pwError, setPwError] = React.useState(false);
 
       const chemicalSheetUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
@@ -124,6 +129,8 @@
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
 
       React.useEffect(() => {
+        if (!isAuthorized) return; // don’t fetch anything until unlocked
+
         fetch(chemicalSheetUrl)
           .then(res => res.text())
           .then(parseChemicalCSV)
@@ -133,7 +140,17 @@
           .then(res => res.text())
           .then(parseApplicatorCSV)
           .catch(() => {});
-      }, []);
+      }, [isAuthorized]);
+
+      function tryLogin() {
+        if (pw === ACCESS_PASSWORD) {
+          localStorage.setItem("spraytime_auth", "true");
+          setIsAuthorized(true);
+          setPwError(false);
+        } else {
+          setPwError(true);
+        }
+      }
 
       /* --------------------------------------------------------
          PARSE CHEMICAL CSV
@@ -172,9 +189,6 @@
         setChemicalOptions(chemicals);
       }
 
-      /* --------------------------------------------------------
-         PARSE APPLICATORS
-      -------------------------------------------------------- */
       function parseApplicatorCSV(data) {
         const rows = data.split(/\r?\n/).filter(r => r.trim());
         const parsed = rows.map(r => r.split(","));
@@ -182,9 +196,6 @@
         if (list.length) setApplicators(list);
       }
 
-      /* --------------------------------------------------------
-         FILE UPLOAD
-      -------------------------------------------------------- */
       const handleCSVUpload = e => {
         const file = e.target.files[0];
         if (!file) return;
@@ -193,8 +204,47 @@
         reader.readAsText(file);
       };
 
+      // 🔒 LOGIN SCREEN
+      if (!isAuthorized) {
+        return (
+          <div className="max-w-sm mx-auto mt-24 bg-white border rounded shadow p-6">
+            <h1 className="text-xl font-bold text-center mb-1">Spray Plan Tool</h1>
+            <div className="text-xs text-gray-600 text-center mb-4">
+              Internal Access Required
+            </div>
+
+            <label className="text-xs font-semibold">Password</label>
+            <input
+              type="password"
+              className="w-full border rounded p-2 mt-1 mb-2"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") tryLogin();
+              }}
+              placeholder="Enter password"
+            />
+
+            {pwError && (
+              <div className="text-xs text-red-600 mb-2">Incorrect password</div>
+            )}
+
+            <button
+              className="w-full bg-blue-600 text-white py-2 rounded text-sm"
+              onClick={tryLogin}
+            >
+              Enter
+            </button>
+
+            <div className="text-center text-[10px] text-gray-500 mt-4">
+              Developed by Jacob Imel — Gardens Alive
+            </div>
+          </div>
+        );
+      }
+
       /* --------------------------------------------------------
-         RENDER
+         APP UI (UNCHANGED)
       -------------------------------------------------------- */
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
@@ -203,6 +253,19 @@
           <div className="flex items-center gap-3">
             <img src="GardensAliveLogo.png" className="h-16" />
             <h1 className="text-2xl font-bold">Spray Plan</h1>
+
+            {/* optional lock */}
+            <button
+              className="ml-auto text-xs underline text-gray-500"
+              onClick={() => {
+                localStorage.removeItem("spraytime_auth");
+                setIsAuthorized(false);
+                setPw("");
+                setPwError(false);
+              }}
+            >
+              Lock
+            </button>
           </div>
 
           {error && (
@@ -338,8 +401,6 @@
           <h2 className="font-semibold mt-2 text-sm">Pests, Diseases & PPE</h2>
 
           <div className="grid grid-cols-4 gap-4">
-
-            {/* PESTS */}
             <div>
               <h4 className="font-semibold underline text-xs mb-1">Pests</h4>
               <div className="flex flex-col gap-1 text-xs">
@@ -351,7 +412,6 @@
               </div>
             </div>
 
-            {/* DISEASES */}
             <div>
               <h4 className="font-semibold underline text-xs mb-1">Diseases</h4>
               <div className="flex flex-col gap-1 text-xs">
@@ -363,7 +423,6 @@
               </div>
             </div>
 
-            {/* WEED MANAGEMENT */}
             <div>
               <h4 className="font-semibold underline text-xs mb-1">Weed Management</h4>
               <div className="flex flex-col gap-1 text-xs">
@@ -375,7 +434,6 @@
               </div>
             </div>
 
-            {/* PPE */}
             <div>
               <h4 className="font-semibold text-xs mb-1 ml-4">Required PPE</h4>
               <div className="flex flex-col gap-1 text-xs ml-4">
@@ -400,7 +458,6 @@
                 })}
               </div>
             </div>
-
           </div>
 
           {/* EMERGENCY */}
@@ -421,12 +478,13 @@
           <h2 className="font-semibold text-sm mt-3">What Was Treated</h2>
           <textarea className="w-full border rounded p-2 compact-input" rows="2"
             placeholder="Enter crop, block, or greenhouse zones treated..."></textarea>
- {/* FOOTER / CREDIT */}
+
+          {/* FOOTER / CREDIT */}
           <div className="text-center text-[10px] text-gray-500 mt-4 pt-2 border-t">
             Page formatted by <span className="font-semibold">Jacob Imel</span>.{" "}
             For questions email{" "}
-            <a href="mailto:Jimel@gardensalive.com" className="underline">
-              Jimel@gardensalive.com
+            <a href="mailto:jimel@gardensalive.com" className="underline">
+              jimel@gardensalive.com
             </a>.
           </div>
 
@@ -435,23 +493,9 @@
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(<SprayPlanBuilder />);
-
   </script>
 </body>
 </html>
-</div>
-  </script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
 
 
 
