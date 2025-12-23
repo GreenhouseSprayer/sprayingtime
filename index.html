@@ -278,69 +278,94 @@
           </button>
 
           {/* TOP FORM */}
+{/* TOP FORM */}
 <div className="grid grid-cols-2 gap-2">
-  <div>
-    <label className="text-xs">Date & Time</label>
-    <input type="datetime-local" className="w-full border compact-input rounded" />
-  </div>
+  {/* LEFT COLUMN */}
+  <div className="space-y-2">
+    <div>
+      <label className="text-xs">Date & Time</label>
+      <input
+        type="datetime-local"
+        className="w-full border compact-input rounded"
+      />
+    </div>
 
-  <div>
-    <label className="text-xs">Area Treated</label>
-    <input type="text" className="w-full border compact-input rounded" />
-  </div>
+    <div>
+      <label className="text-xs">Applicator</label>
+      <select
+        className="w-full border compact-input rounded"
+        value={applicator}
+        onChange={(e) => setApplicator(e.target.value)}
+      >
+        <option value="">Select Applicator...</option>
+        {applicators.map((a) => (
+          <option key={a}>{a}</option>
+        ))}
+      </select>
+    </div>
 
-  <div>
-    <label className="text-xs">Applicator</label>
-    <select
-      className="w-full border compact-input rounded"
-      value={applicator}
-      onChange={e => setApplicator(e.target.value)}
-    >
-      <option value="">Select Applicator...</option>
-      {applicators.map(a => <option key={a}>{a}</option>)}
-    </select>
-  </div>
-
-  <div className="grid grid-cols-2 gap-2">
-    {/* LEFT COLUMN — METHOD + WEATHER */}
-    <div className="space-y-1">
-      <label className="text-xs font-semibold">Method</label>
+    <div>
+      <label className="text-xs">Method</label>
       <select
         className="w-full border compact-input rounded"
         value={method}
-        onChange={e => setMethod(e.target.value)}
+        onChange={(e) => setMethod(e.target.value)}
       >
         <option value="">Select Method...</option>
-        {DEFAULT_METHODS.map(m => <option key={m}>{m}</option>)}
-      </select>
-
-      <div className="grid grid-cols-2 gap-1">
-        <div>
-          <label className="text-[10px] text-gray-600">Wind Speed</label>
-          <input type="text" className="w-full border compact-input rounded" placeholder="mph" />
-        </div>
-
-        <div>
-          <label className="text-[10px] text-gray-600">Direction / Temp</label>
-          <input type="text" className="w-full border compact-input rounded" placeholder="N @ 72°F" />
-        </div>
-      </div>
-    </div>
-
-    {/* RIGHT COLUMN — EQUIPMENT */}
-    <div>
-      <label className="text-xs font-semibold">Equipment</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={equipment}
-        onChange={e => setEquipment(e.target.value)}
-      >
-        <option value="">Select Equipment...</option>
-        {DEFAULT_EQUIPMENT.map(eq => <option key={eq}>{eq}</option>)}
+        {DEFAULT_METHODS.map((m) => (
+          <option key={m}>{m}</option>
+        ))}
       </select>
     </div>
   </div>
-</div>   {/* ✅ THIS closes TOP FORM grid-cols-2 */}
+
+  {/* RIGHT COLUMN */}
+  <div className="space-y-2">
+    <div>
+      <label className="text-xs">Area Treated</label>
+      <input
+        type="text"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+
+    <div>
+      <label className="text-xs">Equipment</label>
+      <select
+        className="w-full border compact-input rounded"
+        value={equipment}
+        onChange={(e) => setEquipment(e.target.value)}
+      >
+        <option value="">Select Equipment...</option>
+        {DEFAULT_EQUIPMENT.map((eq) => (
+          <option key={eq}>{eq}</option>
+        ))}
+      </select>
+    </div>
+
+    {/* Weather row (fills same width as dropdowns) */}
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <label className="text-xs">Wind / Direction</label>
+        <input
+          type="text"
+          className="w-full border compact-input rounded"
+          placeholder="10 mph NW"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs">Temperature</label>
+        <input
+          type="text"
+          className="w-full border compact-input rounded"
+          placeholder="72°F"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
 
                    {/* CHEMICALS */}
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
@@ -536,6 +561,7 @@
   </script>
 </body>
 </html>
+
 
 
 
