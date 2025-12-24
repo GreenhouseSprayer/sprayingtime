@@ -355,28 +355,30 @@
     </div>
 
     {/* Weather row (fills same width as dropdowns) */}
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <label className="text-xs">Wind / Direction</label>
-        <input
-          type="text"
-          className="w-full border compact-input rounded"
-          placeholder="10 mph NW"
-        />
-      </div>
+<div className="grid grid-cols-2 gap-2">
+  <div>
+    <label className="text-xs">Wind / Direction</label>
+    <input
+      type="text"
+      className="w-full border compact-input rounded"
+      placeholder="10 mph NW"
+    />
+  </div>
 
-      <div>
-        <label className="text-xs">Temperature</label>
-        <input
-          type="text"
-          className="w-full border compact-input rounded"
-          placeholder="72°F"
-        />
-      </div>
+  <div>
+    <label className="text-xs">Temperature</label>
+    <div className="relative">
+      <input
+        type="text"
+        className="w-full border compact-input rounded pr-8"
+        placeholder="72"
+      />
+      <span className="absolute right-2 top-[6px] text-xs text-gray-600">
+        °F
+      </span>
     </div>
   </div>
 </div>
-
 
                    {/* CHEMICALS */}
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
@@ -572,6 +574,7 @@
   </script>
 </body>
 </html>
+
 
 
 
