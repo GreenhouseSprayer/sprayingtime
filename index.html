@@ -287,8 +287,7 @@
           <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => window.print()}>
             Print / Save PDF
           </button>
-
-         {/* TOP FORM */}
+{/* TOP FORM */}
 <div className="grid grid-cols-2 gap-2">
 
   {/* LEFT COLUMN */}
@@ -334,8 +333,56 @@
   <div className="space-y-2">
     <div>
       <label className="text-xs">Area Treated</label>
+      <input
+        type="text"
+        className="w-full border compact-input rounded"
+      />
+    </div>
 
-      
+    <div>
+      <label className="text-xs">Equipment</label>
+      <select
+        className="w-full border compact-input rounded"
+        value={equipment}
+        onChange={e => setEquipment(e.target.value)}
+      >
+        <option value="">Select Equipment...</option>
+        {DEFAULT_EQUIPMENT.map(eq => (
+          <option key={eq}>{eq}</option>
+        ))}
+      </select>
+    </div>
+
+    {/* WIND + TEMP — under Equipment */}
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <label className="text-xs">Wind / Direction</label>
+        <input
+          type="text"
+          className="w-full border compact-input rounded"
+          placeholder="10 mph NW"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs">Temperature</label>
+        <div className="relative">
+          <input
+            type="text"
+            className="w-full border compact-input rounded pr-8"
+            placeholder="72"
+          />
+          <span className="absolute right-2 top-[6px] text-xs text-gray-600">
+            °F
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+        
     {/* CHEMICALS */}
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
           <table className="w-full border text-xs">
@@ -530,6 +577,7 @@
   </script>
 </body>
 </html>
+
 
 
 
