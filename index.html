@@ -288,97 +288,88 @@
             Print / Save PDF
           </button>
 
-         {/* TOP FORM */}
-<div className="grid grid-cols-2 gap-2">
-  {/* LEFT COLUMN */}
-  <div className="space-y-2">
-    <div>
-      <label className="text-xs">Date & Time</label>
-      <input
-        type="datetime-local"
-        className="w-full border compact-input rounded"
-      />
-    </div>
-
-    <div>
-      <label className="text-xs">Applicator</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={applicator}
-        onChange={(e) => setApplicator(e.target.value)}
-      >
-        <option value="">Select Applicator...</option>
-        {applicators.map((a) => (
-          <option key={a}>{a}</option>
-        ))}
-      </select>
-    </div>
-
-    <div>
-      <label className="text-xs">Method</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={method}
-        onChange={(e) => setMethod(e.target.value)}
-      >
-        <option value="">Select Method...</option>
-        {DEFAULT_METHODS.map((m) => (
-          <option key={m}>{m}</option>
-        ))}
-      </select>
-    </div>
-  </div>
-
-  {/* RIGHT COLUMN */}
-  <div className="space-y-2">
-    <div>
-      <label className="text-xs">Area Treated</label>
-      <input
-        type="text"
-        className="w-full border compact-input rounded"
-      />
-    </div>
-
-    <div>
-      <label className="text-xs">Equipment</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={equipment}
-        onChange={(e) => setEquipment(e.target.value)}
-      >
-        <option value="">Select Equipment...</option>
-        {DEFAULT_EQUIPMENT.map((eq) => (
-          <option key={eq}>{eq}</option>
-        ))}
-      </select>
-    </div>
-
-    {/* Weather row (fills same width as dropdowns) */}
+          {/* TOP FORM */}
 <div className="grid grid-cols-2 gap-2">
   <div>
-    <label className="text-xs">Wind / Direction</label>
-    <input
-      type="text"
+    <label className="text-xs">Date & Time</label>
+    <input type="datetime-local" className="w-full border compact-input rounded" />
+  </div>
+
+  <div>
+    <label className="text-xs">Area Treated</label>
+    <input type="text" className="w-full border compact-input rounded" />
+  </div>
+
+  <div>
+    <label className="text-xs">Applicator</label>
+    <select
       className="w-full border compact-input rounded"
-      placeholder="10 mph NW"
-    />
+      value={applicator}
+      onChange={(e) => setApplicator(e.target.value)}
+    >
+      <option value="">Select Applicator...</option>
+      {applicators.map((a) => (
+        <option key={a} value={a}>{a}</option>
+      ))}
+    </select>
   </div>
 
   <div>
-    <label className="text-xs">Temperature</label>
-    <div className="relative">
-      <input
-        type="text"
-        className="w-full border compact-input rounded pr-8"
-        placeholder="72"
-      />
-      <span className="absolute right-2 top-[6px] text-xs text-gray-600">
-        °F
-      </span>
+    <label className="text-xs">Equipment</label>
+    <select
+      className="w-full border compact-input rounded"
+      value={equipment}
+      onChange={(e) => setEquipment(e.target.value)}
+    >
+      <option value="">Select Equipment...</option>
+      {DEFAULT_EQUIPMENT.map((eq) => (
+        <option key={eq} value={eq}>{eq}</option>
+      ))}
+    </select>
+  </div>
+
+  <div>
+    <label className="text-xs">Method</label>
+    <select
+      className="w-full border compact-input rounded"
+      value={method}
+      onChange={(e) => setMethod(e.target.value)}
+    >
+      <option value="">Select Method...</option>
+      {DEFAULT_METHODS.map((m) => (
+        <option key={m} value={m}>{m}</option>
+      ))}
+    </select>
+
+    {/* Weather row under Method */}
+    <div className="grid grid-cols-2 gap-2 mt-2">
+      <div>
+        <label className="text-xs">Wind / Direction</label>
+        <input
+          type="text"
+          className="w-full border compact-input rounded"
+          placeholder="10 mph NW"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs">Temperature</label>
+        <div className="relative">
+          <input
+            type="text"
+            className="w-full border compact-input rounded pr-8"
+            placeholder="72"
+          />
+          <span className="absolute right-2 top-[6px] text-xs text-gray-600">°F</span>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
+  {/* (optional) empty cell so grid stays balanced */}
+  <div />
+</div>
+        
     {/* CHEMICALS */}
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
           <table className="w-full border text-xs">
@@ -573,6 +564,7 @@
   </script>
 </body>
 </html>
+
 
 
 
