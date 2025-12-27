@@ -111,6 +111,29 @@
 
 
     const ACCESS_PASSWORD = "spraytime";
+    function makeLinksForChemical(chemName) {
+  const q = encodeURIComponent(chemName);
+
+  return [
+    {
+      label: "Google (label/SDS)",
+      url: `https://www.google.com/search?q=${q}+label+SDS+pdf`,
+    },
+    {
+      label: "EPA PPLS (PDF label search)",
+      url: `https://www.google.com/search?q=site:epa.gov+ppls+${q}+pdf`,
+    },
+    {
+      label: "EPA Chem/Product search",
+      url: `https://www.google.com/search?q=site:epa.gov+pesticides+${q}`,
+    },
+    {
+      label: "Manufacturer / SDS search",
+      url: `https://www.google.com/search?q=${q}+manufacturer+SDS`,
+    },
+  ];
+}
+
 
     /* --------------------------------------------------------
        MAIN COMPONENT
@@ -471,6 +494,36 @@
               })}
             </tbody>
           </table>
+          <h2 className="font-semibold mt-3 text-sm">Chemical Reference Links</h2>
+
+<div className="border rounded bg-white p-2 text-xs space-y-2">
+  {Array.from(new Set(selectedChems.filter(Boolean))).length === 0 && (
+    <div className="text-gray-500 italic">
+      Select a chemical to view reference links.
+    </div>
+  )}
+
+  {Array.from(new Set(selectedChems.filter(Boolean))).map((chem) => (
+    <div key={chem} className="border rounded p-2 bg-gray-50">
+      <div className="font-semibold mb-1">{chem}</div>
+
+      <div className="flex flex-wrap gap-2">
+        {makeLinksForChemical(chem).map((l) => (
+          <a
+            key={l.label}
+            href={l.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            {l.label} ↗
+          </a>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
 
           {/* PESTS, DISEASES, WEED MGMT, PPE */}
           <h2 className="font-semibold mt-2 text-sm">Pests, Diseases & PPE</h2>
@@ -577,6 +630,7 @@
   </script>
 </body>
 </html>
+
 
 
 
