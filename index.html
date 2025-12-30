@@ -136,6 +136,67 @@
     },
   ];
 }
+    function ChemicalSearchSelect({ options, value, onChange }) {
+  const [query, setQuery] = React.useState(value || "");
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
+
+  const filtered =
+    query.trim().length < 1
+      ? []
+      : options
+          .filter((c) =>
+            (c.chemical || "").toLowerCase().includes(query.toLowerCase())
+          )
+          .slice(0, 10);
+
+  function choose(name) {
+    setQuery(name);
+    onChange(name);
+    setOpen(false);
+  }
+
+  function handleBlur() {
+    // allow clicks on suggestions before closing
+    setTimeout(() => setOpen(false), 120);
+  }
+
+  return (
+    <div className="relative">
+      <input
+        className="w-full border compact-input rounded"
+        value={query}
+        placeholder="Search chemical..."
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={handleBlur}
+      />
+
+      {open && filtered.length > 0 && (
+        <div className="no-print absolute z-50 mt-1 w-full bg-white border rounded shadow max-h-56 overflow-auto text-xs">
+          {filtered.map((c) => (
+            <button
+              type="button"
+              key={c.chemical}
+              onClick={() => choose(c.chemical)}
+              className="w-full text-left px-2 py-1 hover:bg-gray-100"
+              title={c.chemical}
+            >
+              {c.chemical}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
     /* --------------------------------------------------------
@@ -428,21 +489,17 @@
                 return (
                   <tr key={i}>
                     <td className="border">
-                      <select
-                        className="w-full border compact-input rounded"
-                        value={chem}
-                        onChange={e => {
-                          const copy = [...selectedChems];
-                          copy[i] = e.target.value;
-                          setSelectedChems(copy);
-                        }}
-                      >
-                        <option value="">Select...</option>
-                        {chemicalOptions.map(c => (
-                          <option key={c.chemical} value={c.chemical}>{c.chemical}</option>
-                        ))}
-                      </select>
-                    </td>
+  <ChemicalSearchSelect
+    options={chemicalOptions}
+    value={chem}
+    onChange={(val) => {
+      const copy = [...selectedChems];
+      copy[i] = val;
+      setSelectedChems(copy);
+    }}
+  />
+</td>
+
                     <td className="border">{full?.epaReg}</td>
                     <td className="border">{full?.ai}</td>
                     <td className="border">{full?.rei}</td>
@@ -636,6 +693,7 @@
   </script>
 </body>
 </html>
+
 
 
 
