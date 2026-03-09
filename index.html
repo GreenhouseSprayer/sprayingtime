@@ -149,6 +149,7 @@ const MAX_CHEMS = 6;
       const [method, setMethod] = React.useState("");
       const [equipment, setEquipment] = React.useState("");   // ✅ ADDED
       const [error, setError] = React.useState("");
+      const [manualPPE, setManualPPE] = React.useState([]);
 
       // 🔒 simple gate
       const [isAuthorized, setIsAuthorized] = React.useState(
@@ -558,29 +559,47 @@ const MAX_CHEMS = 6;
             </div>
 
             <div>
-              <h4 className="font-semibold text-xs mb-1 ml-4">Required PPE</h4>
-              <div className="flex flex-col gap-1 text-xs ml-4">
-                {PPE_ITEMS.map(item => {
-                  const needsMask = selectedChems.some(c => {
-                    const f = chemicalOptions.find(x => x.chemical === c);
-                    return f?.mask?.toLowerCase() === "mask";
-                  });
-                  const isMask = item === "Respirator/Mask";
+  <h4 className="font-semibold text-xs mb-1 ml-4">Required PPE</h4>
+  <div className="flex flex-col gap-1 text-xs ml-4">
+    {PPE_ITEMS.map(item => {
+      const needsMaskFromChemical = selectedChems.some(c => {
+        const f = chemicalOptions.find(x => x.chemical === c);
+        return (f?.mask || "").toLowerCase().includes("mask");
+      });
 
-                  return (
-                    <label key={item} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="mr-1"
-                        checked={isMask ? needsMask : undefined}
-                        onChange={() => {}}
-                      />
-                      {item}
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
+      const manuallyChecked = manualPPE.includes(item);
+      const isMask = item === "Respirator/Mask";
+
+      const isChecked = isMask
+        ? needsMaskFromChemical || manuallyChecked
+        : manuallyChecked;
+
+      return (
+        <label key={item} className="flex items-center">
+          <input
+            type="checkbox"
+            className="mr-1"
+            checked={isChecked}
+            onChange={(e) => {
+              const checked = e.target.checked;
+
+              setManualPPE(prev => {
+                const hasItem = prev.includes(item);
+
+                if (checked) {
+                  return hasItem ? prev : [...prev, item];
+                } else {
+                  return prev.filter(p => p !== item);
+                }
+              });
+            }}
+          />
+          {item}
+        </label>
+      );
+    })}
+  </div>
+</div>
           </div>
 
           {/* EMERGENCY */}
@@ -657,6 +676,7 @@ const MAX_CHEMS = 6;
   </script>
 </body>
 </html>
+
 
 
 
