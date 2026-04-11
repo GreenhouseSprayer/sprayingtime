@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spray Plan</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- React + Babel -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -26,7 +24,6 @@
   body { margin: 0; padding: 0; font-size: 10px; }
   table { page-break-inside: avoid; }
 }
-
 
     body {
       font-size: 12px;
@@ -55,7 +52,7 @@
     /* --------------------------------------------------------
        CLEAN UPDATED ARRAYS
     -------------------------------------------------------- */
-const MAX_CHEMS = 6;
+    const MAX_CHEMS = 6;
     
     const DISEASES = [
       "Botrytis (Gray Mold)",
@@ -97,46 +94,25 @@ const MAX_CHEMS = 6;
     ].sort();
 
     const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
-    const DEFAULT_METHODS = [
-  "Foliar",
-  "Drench",
-  "Broadcast",
-  "Sprench",
-  "Spot Treatment"
-].sort();
 
-    const DEFAULT_EQUIPMENT = [
-  "Drone",
-  "Hagie Sprayer",
-  "Air-Blast Mist Sprayer",
-  "Herbicide Boom Sprayer",
-  "Vicon Spreader",
-  "Hurricane Sprayer",
-  "100 Gallon Sprayer",
-  "4 Gallon Backpack",
-  "Dosatron"
-].sort();
+    function makeLinksForChemical(chemName) {
+      const q = encodeURIComponent(chemName);
 
-
-    const ACCESS_PASSWORD = "spraytime";
-   function makeLinksForChemical(chemName) {
-  const q = encodeURIComponent(chemName);
-
-  return [
-    {
-      label: "Manufacturer",
-      url: `https://www.google.com/search?q=${q}+manufacturer`,
-    },
-    {
-      label: "DoMyOwn",
-      url: `https://www.google.com/search?q=site:domyown.com+${q}`,
-    },
-    {
-      label: "Label / SDS",
-      url: `https://www.google.com/search?q=${q}+label+SDS+pdf`,
-    },
-  ];
-}
+      return [
+        {
+          label: "Manufacturer",
+          url: `https://www.google.com/search?q=${q}+manufacturer`,
+        },
+        {
+          label: "DoMyOwn",
+          url: `https://www.google.com/search?q=site:domyown.com+${q}`,
+        },
+        {
+          label: "Label / SDS",
+          url: `https://www.google.com/search?q=${q}+label+SDS+pdf`,
+        },
+      ];
+    }
    
     /* --------------------------------------------------------
        MAIN COMPONENT
@@ -147,16 +123,9 @@ const MAX_CHEMS = 6;
       const [selectedChems, setSelectedChems] = React.useState([""]);
       const [applicator, setApplicator] = React.useState("");
       const [method, setMethod] = React.useState("");
-      const [equipment, setEquipment] = React.useState("");   // ✅ ADDED
+      const [equipment, setEquipment] = React.useState("");
       const [error, setError] = React.useState("");
       const [manualPPE, setManualPPE] = React.useState([]);
-
-      // 🔒 simple gate
-      const [isAuthorized, setIsAuthorized] = React.useState(
-        localStorage.getItem("spraytime_auth") === "true"
-      );
-      const [pw, setPw] = React.useState("");
-      const [pwError, setPwError] = React.useState(false);
 
       const chemicalSheetUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
@@ -165,8 +134,6 @@ const MAX_CHEMS = 6;
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
 
       React.useEffect(() => {
-        if (!isAuthorized) return; // don’t fetch anything until unlocked
-
         fetch(chemicalSheetUrl)
           .then(res => res.text())
           .then(parseChemicalCSV)
@@ -176,17 +143,7 @@ const MAX_CHEMS = 6;
           .then(res => res.text())
           .then(parseApplicatorCSV)
           .catch(() => {});
-      }, [isAuthorized]);
-
-      function tryLogin() {
-        if (pw === ACCESS_PASSWORD) {
-          localStorage.setItem("spraytime_auth", "true");
-          setIsAuthorized(true);
-          setPwError(false);
-        } else {
-          setPwError(true);
-        }
-      }
+      }, []);
 
       /* --------------------------------------------------------
          PARSE CHEMICAL CSV
@@ -240,45 +197,6 @@ const MAX_CHEMS = 6;
         reader.readAsText(file);
       };
 
-      // 🔒 LOGIN SCREEN
-      if (!isAuthorized) {
-        return (
-          <div className="max-w-sm mx-auto mt-24 bg-white border rounded shadow p-6">
-            <h1 className="text-xl font-bold text-center mb-1">Spray Plan Tool</h1>
-            <div className="text-xs text-gray-600 text-center mb-4">
-              Internal Access Required
-            </div>
-
-            <label className="text-xs font-semibold">Password</label>
-            <input
-              type="password"
-              className="w-full border rounded p-2 mt-1 mb-2"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") tryLogin();
-              }}
-              placeholder="Enter password"
-            />
-
-            {pwError && (
-              <div className="text-xs text-red-600 mb-2">Incorrect password</div>
-            )}
-
-            <button
-              className="w-full bg-blue-600 text-white py-2 rounded text-sm"
-              onClick={tryLogin}
-            >
-              Enter
-            </button>
-
-            <div className="text-center text-[10px] text-gray-500 mt-4">
-              Developed by Jacob Imel — Gardens Alive
-            </div>
-          </div>
-        );
-      }
-
       /* --------------------------------------------------------
          APP UI
       -------------------------------------------------------- */
@@ -287,24 +205,10 @@ const MAX_CHEMS = 6;
 
           {/* HEADER */}
           <div className="flex items-center gap-3">
-            <img src="GardensAliveLogo.png" className="h-16" />
             <h1 className="text-2xl font-bold">Spray Plan</h1>
-
-            {/* optional lock */}
-            <button
-              className="ml-auto text-xs underline text-gray-500"
-              onClick={() => {
-                localStorage.removeItem("spraytime_auth");
-                setIsAuthorized(false);
-                setPw("");
-                setPwError(false);
-              }}
-            >
-              Lock
-            </button>
           </div>
 
-                  {error && (
+          {error && (
             <div className="bg-red-200 text-red-900 p-2 rounded">
               {error}
               <input type="file" accept=".csv" onChange={handleCSVUpload} className="mt-1" />
@@ -314,103 +218,96 @@ const MAX_CHEMS = 6;
           <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => window.print()}>
             Print / Save PDF
           </button>
-{/* TOP FORM */}
-<div className="grid grid-cols-2 gap-2">
 
-  {/* LEFT COLUMN */}
-  <div className="space-y-2">
-    <div>
-      <label className="text-xs">Date & Time</label>
-      <input
-        type="datetime-local"
-        className="w-full border compact-input rounded"
-      />
-    </div>
+          {/* TOP FORM */}
+          <div className="grid grid-cols-2 gap-2">
 
-    <div>
-      <label className="text-xs">Applicator</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={applicator}
-        onChange={e => setApplicator(e.target.value)}
-      >
-        <option value="">Select Applicator...</option>
-        {applicators.map(a => (
-          <option key={a}>{a}</option>
-        ))}
-      </select>
-    </div>
+            {/* LEFT COLUMN */}
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs">Date & Time</label>
+                <input
+                  type="datetime-local"
+                  className="w-full border compact-input rounded"
+                />
+              </div>
 
-    <div>
-      <label className="text-xs">Method</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={method}
-        onChange={e => setMethod(e.target.value)}
-      >
-        <option value="">Select Method...</option>
-        {DEFAULT_METHODS.map(m => (
-          <option key={m}>{m}</option>
-        ))}
-      </select>
-    </div>
-  </div>
+              <div>
+                <label className="text-xs">Applicator</label>
+                <select
+                  className="w-full border compact-input rounded"
+                  value={applicator}
+                  onChange={e => setApplicator(e.target.value)}
+                >
+                  <option value="">Select Applicator...</option>
+                  {applicators.map(a => (
+                    <option key={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
 
-  {/* RIGHT COLUMN */}
-  <div className="space-y-2">
-    <div>
-      <label className="text-xs">Area Treated</label>
-      <input
-        type="text"
-        className="w-full border compact-input rounded"
-      />
-    </div>
+              <div>
+                <label className="text-xs">Method</label>
+                <input
+                  type="text"
+                  className="w-full border compact-input rounded"
+                  value={method}
+                  onChange={e => setMethod(e.target.value)}
+                  placeholder="e.g. Foliar, Drench, Broadcast..."
+                />
+              </div>
+            </div>
 
-    <div>
-      <label className="text-xs">Equipment</label>
-      <select
-        className="w-full border compact-input rounded"
-        value={equipment}
-        onChange={e => setEquipment(e.target.value)}
-      >
-        <option value="">Select Equipment...</option>
-        {DEFAULT_EQUIPMENT.map(eq => (
-          <option key={eq}>{eq}</option>
-        ))}
-      </select>
-    </div>
+            {/* RIGHT COLUMN */}
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs">Area Treated</label>
+                <input
+                  type="text"
+                  className="w-full border compact-input rounded"
+                />
+              </div>
 
-    {/* WIND + TEMP — under Equipment */}
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <label className="text-xs">Wind / Direction</label>
-        <input
-          type="text"
-          className="w-full border compact-input rounded"
-          placeholder="10 mph NW"
-        />
-      </div>
+              <div>
+                <label className="text-xs">Equipment</label>
+                <input
+                  type="text"
+                  className="w-full border compact-input rounded"
+                  value={equipment}
+                  onChange={e => setEquipment(e.target.value)}
+                  placeholder="e.g. 100 Gallon Sprayer, Backpack..."
+                />
+              </div>
 
-      <div>
-        <label className="text-xs">Temperature</label>
-        <div className="relative">
-          <input
-            type="text"
-            className="w-full border compact-input rounded pr-8"
-            placeholder="72"
-          />
-          <span className="absolute right-2 top-[6px] text-xs text-gray-600">
-            °F
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
+              {/* WIND + TEMP */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs">Wind / Direction</label>
+                  <input
+                    type="text"
+                    className="w-full border compact-input rounded"
+                    placeholder="10 mph NW"
+                  />
+                </div>
 
-</div>
+                <div>
+                  <label className="text-xs">Temperature</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="w-full border compact-input rounded pr-8"
+                      placeholder="72"
+                    />
+                    <span className="absolute right-2 top-[6px] text-xs text-gray-600">
+                      °F
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        
-    {/* CHEMICALS */}
+          {/* CHEMICALS */}
           <h2 className="font-semibold mt-2 text-sm">Chemicals Applied</h2>
           <table className="w-full border text-xs">
             <thead className="bg-gray-200">
@@ -423,57 +320,57 @@ const MAX_CHEMS = 6;
               </tr>
             </thead>
 
-           <tbody>
-  {selectedChems.map((chem, i) => {
-    const full = chemicalOptions.find(c => c.chemical === chem);
+            <tbody>
+              {selectedChems.map((chem, i) => {
+                const full = chemicalOptions.find(c => c.chemical === chem);
 
-    return (
-      <tr key={i}>
-        <td className="border">
-          <select
-            className="w-full border compact-input rounded"
-            value={chem}
-            onChange={(e) => {
-              const copy = [...selectedChems];
-              copy[i] = e.target.value;
-              setSelectedChems(copy);
-            }}
-          >
-            <option value="">Select…</option>
-            {chemicalOptions.map(c => (
-              <option key={c.chemical} value={c.chemical}>
-                {c.chemical}
-              </option>
-            ))}
-          </select>
-        </td>
+                return (
+                  <tr key={i}>
+                    <td className="border">
+                      <select
+                        className="w-full border compact-input rounded"
+                        value={chem}
+                        onChange={(e) => {
+                          const copy = [...selectedChems];
+                          copy[i] = e.target.value;
+                          setSelectedChems(copy);
+                        }}
+                      >
+                        <option value="">Select…</option>
+                        {chemicalOptions.map(c => (
+                          <option key={c.chemical} value={c.chemical}>
+                            {c.chemical}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
 
-        <td className="border">{full?.epaReg}</td>
-        <td className="border">{full?.ai}</td>
-        <td className="border">{full?.rei}</td>
-        <td className="border">{full?.moA}</td>
-      </tr>
-    );
-  })}
+                    <td className="border">{full?.epaReg}</td>
+                    <td className="border">{full?.ai}</td>
+                    <td className="border">{full?.rei}</td>
+                    <td className="border">{full?.moA}</td>
+                  </tr>
+                );
+              })}
 
-  {/* ADD BUTTON ROW */}
-  {selectedChems.length < MAX_CHEMS && (
-    <tr>
-      <td colSpan="5" className="border text-left">
-        <button
-          type="button"
-          className="text-blue-600 text-xs underline no-print"
-          onClick={() =>
-            setSelectedChems([...selectedChems, ""])
-          }
-        >
-          + Add another chemical
-        </button>
-      </td>
-    </tr>
-  )}
-</tbody>
-            </table>
+              {/* ADD BUTTON ROW */}
+              {selectedChems.length < MAX_CHEMS && (
+                <tr>
+                  <td colSpan="5" className="border text-left">
+                    <button
+                      type="button"
+                      className="text-blue-600 text-xs underline no-print"
+                      onClick={() =>
+                        setSelectedChems([...selectedChems, ""])
+                      }
+                    >
+                      + Add another chemical
+                    </button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
           {/* SAFETY INFO */}
           <h2 className="font-semibold mt-2 text-sm">Chemical Safety Information</h2>
@@ -519,7 +416,6 @@ const MAX_CHEMS = 6;
               })}
             </tbody>
           </table>
-         
 
           {/* PESTS, DISEASES, WEED MGMT, PPE */}
           <h2 className="font-semibold mt-2 text-sm">Pests, Diseases & PPE</h2>
@@ -559,47 +455,47 @@ const MAX_CHEMS = 6;
             </div>
 
             <div>
-  <h4 className="font-semibold text-xs mb-1 ml-4">Required PPE</h4>
-  <div className="flex flex-col gap-1 text-xs ml-4">
-    {PPE_ITEMS.map(item => {
-      const needsMaskFromChemical = selectedChems.some(c => {
-        const f = chemicalOptions.find(x => x.chemical === c);
-        return (f?.mask || "").toLowerCase().includes("mask");
-      });
+              <h4 className="font-semibold text-xs mb-1 ml-4">Required PPE</h4>
+              <div className="flex flex-col gap-1 text-xs ml-4">
+                {PPE_ITEMS.map(item => {
+                  const needsMaskFromChemical = selectedChems.some(c => {
+                    const f = chemicalOptions.find(x => x.chemical === c);
+                    return (f?.mask || "").toLowerCase().includes("mask");
+                  });
 
-      const manuallyChecked = manualPPE.includes(item);
-      const isMask = item === "Respirator/Mask";
+                  const manuallyChecked = manualPPE.includes(item);
+                  const isMask = item === "Respirator/Mask";
 
-      const isChecked = isMask
-        ? needsMaskFromChemical || manuallyChecked
-        : manuallyChecked;
+                  const isChecked = isMask
+                    ? needsMaskFromChemical || manuallyChecked
+                    : manuallyChecked;
 
-      return (
-        <label key={item} className="flex items-center">
-          <input
-            type="checkbox"
-            className="mr-1"
-            checked={isChecked}
-            onChange={(e) => {
-              const checked = e.target.checked;
+                  return (
+                    <label key={item} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="mr-1"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
 
-              setManualPPE(prev => {
-                const hasItem = prev.includes(item);
+                          setManualPPE(prev => {
+                            const hasItem = prev.includes(item);
 
-                if (checked) {
-                  return hasItem ? prev : [...prev, item];
-                } else {
-                  return prev.filter(p => p !== item);
-                }
-              });
-            }}
-          />
-          {item}
-        </label>
-      );
-    })}
-  </div>
-</div>
+                            if (checked) {
+                              return hasItem ? prev : [...prev, item];
+                            } else {
+                              return prev.filter(p => p !== item);
+                            }
+                          });
+                        }}
+                      />
+                      {item}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* EMERGENCY */}
@@ -626,45 +522,45 @@ const MAX_CHEMS = 6;
             rows="2"
             placeholder="Enter crop, block, or greenhouse zones treated..."
           ></textarea>
-<div className="no-print">
-  <h2 className="font-semibold mt-3 text-sm">Chemical Reference Links</h2>
 
-  <div className="border rounded bg-white p-2 text-xs space-y-2">
-    {Array.from(new Set(selectedChems.filter(Boolean))).length === 0 && (
-      <div className="text-gray-500 italic">
-        Select a chemical to view reference links.
-      </div>
-    )}
+          <div className="no-print">
+            <h2 className="font-semibold mt-3 text-sm">Chemical Reference Links</h2>
 
-    {Array.from(new Set(selectedChems.filter(Boolean))).map((chem) => (
-      <div key={chem} className="border rounded p-2 bg-gray-50">
-        <div className="font-semibold mb-1">{chem}</div>
+            <div className="border rounded bg-white p-2 text-xs space-y-2">
+              {Array.from(new Set(selectedChems.filter(Boolean))).length === 0 && (
+                <div className="text-gray-500 italic">
+                  Select a chemical to view reference links.
+                </div>
+              )}
 
-        <div className="flex flex-wrap gap-2">
-          {makeLinksForChemical(chem).map((l) => (
-            <a
-              key={l.label}
-              href={l.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              {l.label} ↗
-            </a>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
+              {Array.from(new Set(selectedChems.filter(Boolean))).map((chem) => (
+                <div key={chem} className="border rounded p-2 bg-gray-50">
+                  <div className="font-semibold mb-1">{chem}</div>
 
-        
+                  <div className="flex flex-wrap gap-2">
+                    {makeLinksForChemical(chem).map((l) => (
+                      <a
+                        key={l.label}
+                        href={l.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        {l.label} ↗
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* FOOTER / CREDIT */}
           <div className="text-center text-[10px] text-gray-500 mt-4 pt-2 border-t">
             Page formatted by <span className="font-semibold">Jacob Imel</span>.{" "}
             For questions email{" "}
-            <a href="mailto:jimel@gardensalive.com" className="underline">
-              jimel@gardensalive.com
+            <a href="mailto:imeljacob@gmail.com" className="underline">
+              imeljacob@gmail.com
             </a>.
           </div>
 
@@ -676,12 +572,6 @@ const MAX_CHEMS = 6;
   </script>
 </body>
 </html>
-
-
-
-
-
-
 
 
 
