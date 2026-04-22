@@ -252,31 +252,58 @@
           {/* TOP FORM */}
           <div className="grid grid-cols-2 gap-2">
 
-            {/* LEFT COLUMN */}
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs">Date & Time</label>
-                <input
-                  type="datetime-local"
-                  className="w-full border compact-input rounded"
-                />
-              </div>
+{/* LEFT COLUMN */}
+<div className="space-y-2">
+  {/* Sub-grid for Date, Start, and Finish */}
+  <div className="grid grid-cols-3 gap-2">
+    <div>
+      <label className="text-xs">Date</label>
+      <input
+        type="date"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+    <div>
+      <label className="text-xs">Start Time</label>
+      <input
+        type="time"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+    <div>
+      <label className="text-xs">Finish Time</label>
+      <input
+        type="time"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+  </div>
 
-              <div>
-                <label className="text-xs">Applicator</label>
-                <select
-                  className="w-full border compact-input rounded"
-                  value={applicator}
-                  onChange={e => setApplicator(e.target.value)}
-                >
-                  <option value="">Select Applicator...</option>
-                  {applicators.map((a, i) => (
-                    <option key={i} value={a}>{a}</option>
-                  ))}
-                </select>
-              </div>
+  <div>
+    <label className="text-xs">Applicator</label>
+    <select
+      className="w-full border compact-input rounded"
+      value={applicator}
+      onChange={e => setApplicator(e.target.value)}
+    >
+      <option value="">Select Applicator...</option>
+      {applicators.map((a, i) => (
+        <option key={i} value={a}>{a}</option>
+      ))}
+    </select>
+  </div>
 
-              <div>
+  <div>
+    <label className="text-xs">Method</label>
+    <input
+      type="text"
+      className="w-full border compact-input rounded"
+      value={method}
+      onChange={e => setMethod(e.target.value)}
+      placeholder="e.g. Foliar, Drench, Broadcast..."
+    />
+  </div>
+</div>
                 <label className="text-xs">Method</label>
                 <input
                   type="text"
