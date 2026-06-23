@@ -78,8 +78,14 @@
       const [equipment, setEquipment] = React.useState("");
       const [error, setError] = React.useState("");
       const [manualPPE, setManualPPE] = React.useState([]);
+      
+      // Tracking state for target issues
+      const [selectedPests, setSelectedPests] = React.useState([]);
+      const [selectedDiseases, setSelectedDiseases] = React.useState([]);
+      const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
+      // Corrected Sheets URLs matching explicit tab target properties
+      const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=0&single=true&output=csv";
       const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
 
       React.useEffect(() => {
@@ -158,6 +164,14 @@
         const reader = new FileReader();
         reader.onload = ev => parseChemicalCSV(ev.target.result);
         reader.readAsText(file);
+      };
+
+      const toggleSelection = (item, currentList, setList) => {
+        if (currentList.includes(item)) {
+          setList(currentList.filter(i => i !== item));
+        } else {
+          setList([...currentList, item]);
+        }
       };
 
       const needsMaskFromChemical = selectedChems.some(c => {
@@ -275,9 +289,45 @@
         // Checkboxes Section
         e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Pests, Diseases & PPE'),
         e('div', { className: 'grid grid-cols-4 gap-4' },
-          e('div', null, e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Pests'), e('div', { className: 'flex flex-col gap-1 text-xs' }, PESTS.map(item => e('label', { key: item, className: 'flex items-center' }, e('input', { type: 'checkbox', className: 'mr-1' }), item)))),
-          e('div', null, e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Diseases'), e('div', { className: 'flex flex-col gap-1 text-xs' }, DISEASES.map(item => e('label', { key: item, className: 'flex items-center' }, e('input', { type: 'checkbox', className: 'mr-1' }), item)))),
-          e('div', null, e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Weed Management'), e('div', { className: 'flex flex-col gap-1 text-xs' }, WEED_MANAGEMENT.map(item => e('label', { key: item, className: 'flex items-center' }, e('input', { type: 'checkbox', className: 'mr-1' }), item)))),
+          e('div', null, 
+            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Pests'), 
+            e('div', { className: 'flex flex-col gap-1 text-xs' }, PESTS.map(item => 
+              e('label', { key: item, className: 'flex items-center' }, 
+                e('input', { 
+                  type: 'checkbox', 
+                  className: 'mr-1',
+                  checked: selectedPests.includes(item),
+                  onChange: () => toggleSelection(item, selectedPests, setSelectedPests)
+                }), 
+                item
+              )))
+          ),
+          e('div', null, 
+            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Diseases'), 
+            e('div', { className: 'flex flex-col gap-1 text-xs' }, DISEASES.map(item => 
+              e('label', { key: item, className: 'flex items-center' }, 
+                e('input', { 
+                  type: 'checkbox', 
+                  className: 'mr-1',
+                  checked: selectedDiseases.includes(item),
+                  onChange: () => toggleSelection(item, selectedDiseases, setSelectedDiseases)
+                }), 
+                item
+              )))
+          ),
+          e('div', null, 
+            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Weed Management'), 
+            e('div', { className: 'flex flex-col gap-1 text-xs' }, WEED_MANAGEMENT.map(item => 
+              e('label', { key: item, className: 'flex items-center' }, 
+                e('input', { 
+                  type: 'checkbox', 
+                  className: 'mr-1',
+                  checked: selectedWeeds.includes(item),
+                  onChange: () => toggleSelection(item, selectedWeeds, setSelectedWeeds)
+                }), 
+                item
+              )))
+          ),
           e('div', null, e('h4', { className: 'font-semibold text-xs mb-1 ml-4' }, 'Required PPE'),
             e('div', { className: 'flex flex-col gap-1 text-xs ml-4' },
               PPE_ITEMS.map(item => {
