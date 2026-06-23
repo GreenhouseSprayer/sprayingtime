@@ -1,0 +1,1 @@
+Branch fix/precompile-jsx created. Updated index.html to remove Tailwind Play CDN, switch React/ReactDOM to production UMD builds, add a mounting fallback, and keep the in-browser Babel transformer for now.

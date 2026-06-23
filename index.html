@@ -5,24 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spray Plan</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind Play CDN removed to avoid injecting module scripts that break the in-browser Babel transformer on GitHub Pages -->
 
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
-    @media print {
-      button,
-      input[type="file"],
-      .no-print,
-      .no-print * {
-        display: none !important;
-      }
-      body { margin: 0; padding: 0; font-size: 10px; }
-      table { page-break-inside: avoid; }
-    }
+   @media print {
+  button,
+  input[type="file"],
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  body { margin: 0; padding: 0; font-size: 10px; }
+  table { page-break-inside: avoid; }
+}
 
     body {
       font-size: 12px;
@@ -46,6 +47,19 @@
 
 <body class="bg-gray-50 p-4">
   <div id="root"></div>
+
+  <!-- Fallback helper: show a helpful message if the app fails to mount (prevents fully blank page) -->
+  <script>
+    setTimeout(() => {
+      const root = document.getElementById('root');
+      if (root && root.innerHTML.trim() === '') {
+        root.innerHTML = '<div style="padding:16px;color:#333;background:#fff;border:1px solid #eee">App failed to mount — open DevTools Console and Network to see which CDN/script failed.</div>';
+      }
+    }, 1000);
+
+    window.addEventListener('error', e => console.error('Global error:', e));
+    window.addEventListener('unhandledrejection', e => console.error('Unhandled promise rejection:', e));
+  </script>
 
   <script type="text/babel">
     /* --------------------------------------------------------
@@ -96,6 +110,7 @@
 
     function makeLinksForChemical(chemName) {
       const q = encodeURIComponent(chemName);
+
       return [
         {
           label: "Manufacturer",
@@ -143,7 +158,7 @@
         fetch(applicatorSheetUrl)
           .then(res => res.text())
           .then(data => {
-            if (!data || data.indexOf("<html") !== -1) return; 
+            if (!data || data.indexOf("<html") !== -1) return; // Fail silently, keep defaults
             parseApplicatorCSV(data);
           })
           .catch(() => {});
@@ -193,7 +208,7 @@
       }
 
       /* --------------------------------------------------------
-         PARSE APPLICATOR CSV
+         PARSE APPLICATOR CSV (UPDATED)
       -------------------------------------------------------- */
       function parseApplicatorCSV(data) {
         try {
@@ -204,12 +219,13 @@
               header ? header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase() : ""
           });
 
+          // Look for the exact column header "applicators"
           const list = parsed.data
             .map(row => row["applicators"] ? row["applicators"].trim() : "")
-            .filter(item => item !== "");
+            .filter(item => item !== ""); // Strip blanks
           
           if (list.length > 0) {
-            setApplicators([...new Set(list)]);
+            setApplicators([...new Set(list)]); // Removes duplicates
           }
         } catch (err) {
           console.error("Failed to parse applicators", err);
@@ -224,8 +240,12 @@
         reader.readAsText(file);
       };
 
+      /* --------------------------------------------------------
+         APP UI
+      -------------------------------------------------------- */
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
+
           {/* HEADER */}
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">Spray Plan</h1>
@@ -234,64 +254,78 @@
           {error && (
             <div className="bg-red-200 text-red-900 p-2 rounded">
               {error}
-              <input type="file" accept=".csv" onChange={handleCSVUpload} className="mt-1 block" />
+              <input type="file" accept=".csv" onChange={handleCSVUpload} className="mt-1" />
             </div>
           )}
 
-          <button className="bg-blue-500 text-white px-3 py-1 rounded no-print" onClick={() => window.print()}>
+          <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => window.print()}>
             Print / Save PDF
           </button>
 
           {/* TOP FORM */}
           <div className="grid grid-cols-2 gap-2">
-            {/* LEFT COLUMN */}
-            <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-xs">Date</label>
-                  <input type="date" className="w-full border compact-input rounded" />
-                </div>
-                <div>
-                  <label className="text-xs">Start Time</label>
-                  <input type="time" className="w-full border compact-input rounded" />
-                </div>
-                <div>
-                  <label className="text-xs">Finish Time</label>
-                  <input type="time" className="w-full border compact-input rounded" />
-                </div>
-              </div>
 
-              <div>
-                <label className="text-xs">Applicator</label>
-                <select
-                  className="w-full border compact-input rounded"
-                  value={applicator}
-                  onChange={e => setApplicator(e.target.value)}
-                >
-                  <option value="">Select Applicator...</option>
-                  {applicators.map((a, i) => (
-                    <option key={i} value={a}>{a}</option>
-                  ))}
-                </select>
-              </div>
+{/* LEFT COLUMN */}
+<div className="space-y-2">
+  {/* Sub-grid for Date, Start, and Finish */}
+  <div className="grid grid-cols-3 gap-2">
+    <div>
+      <label className="text-xs">Date</label>
+      <input
+        type="date"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+    <div>
+      <label className="text-xs">Start Time</label>
+      <input
+        type="time"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+    <div>
+      <label className="text-xs">Finish Time</label>
+      <input
+        type="time"
+        className="w-full border compact-input rounded"
+      />
+    </div>
+  </div>
 
-              <div>
-                <label className="text-xs">Method</label>
-                <input
-                  type="text"
-                  className="w-full border compact-input rounded"
-                  value={method}
-                  onChange={e => setMethod(e.target.value)}
-                  placeholder="e.g. Foliar, Drench, Broadcast..."
-                />
-              </div>
-            </div>
+  <div>
+    <label className="text-xs">Applicator</label>
+    <select
+      className="w-full border compact-input rounded"
+      value={applicator}
+      onChange={e => setApplicator(e.target.value)}
+    >
+      <option value="">Select Applicator...</option>
+      {applicators.map((a, i) => (
+        <option key={i} value={a}>{a}</option>
+      ))}
+    </select>
+  </div>
+
+  <div>
+    <label className="text-xs">Method</label>
+    <input
+      type="text"
+      className="w-full border compact-input rounded"
+      value={method}
+      onChange={e => setMethod(e.target.value)}
+      placeholder="e.g. Foliar, Drench, Broadcast..."
+    />
+  </div>
+</div>
 
             {/* RIGHT COLUMN */}
             <div className="space-y-2">
               <div>
                 <label className="text-xs">Area Treated</label>
-                <input type="text" className="w-full border compact-input rounded" />
+                <input
+                  type="text"
+                  className="w-full border compact-input rounded"
+                />
               </div>
 
               <div>
@@ -305,16 +339,28 @@
                 />
               </div>
 
+              {/* WIND + TEMP */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs">Wind / Direction</label>
-                  <input type="text" className="w-full border compact-input rounded" placeholder="10 mph NW" />
+                  <input
+                    type="text"
+                    className="w-full border compact-input rounded"
+                    placeholder="10 mph NW"
+                  />
                 </div>
+
                 <div>
                   <label className="text-xs">Temperature</label>
                   <div className="relative">
-                    <input type="text" className="w-full border compact-input rounded pr-8" placeholder="72" />
-                    <span className="absolute right-2 top-[6px] text-xs text-gray-600">°F</span>
+                    <input
+                      type="text"
+                      className="w-full border compact-input rounded pr-8"
+                      placeholder="72"
+                    />
+                    <span className="absolute right-2 top-[6px] text-xs text-gray-600">
+                      °F
+                    </span>
                   </div>
                 </div>
               </div>
@@ -333,9 +379,11 @@
                 <th className="border">MoA</th>
               </tr>
             </thead>
+
             <tbody>
               {selectedChems.map((chem, i) => {
                 const full = chemicalOptions.find(c => c.chemical === chem);
+
                 return (
                   <tr key={i}>
                     <td className="border">
@@ -350,10 +398,13 @@
                       >
                         <option value="">Select…</option>
                         {chemicalOptions.map((c, idx) => (
-                          <option key={idx} value={c.chemical}>{c.chemical}</option>
+                          <option key={idx} value={c.chemical}>
+                            {c.chemical}
+                          </option>
                         ))}
                       </select>
                     </td>
+
                     <td className="border">{full ? full.epaReg : ""}</td>
                     <td className="border">{full ? full.ai : ""}</td>
                     <td className="border">{full ? full.rei : ""}</td>
@@ -362,13 +413,16 @@
                 );
               })}
 
+              {/* ADD BUTTON ROW */}
               {selectedChems.length < MAX_CHEMS && (
                 <tr>
                   <td colSpan="5" className="border text-left">
                     <button
                       type="button"
                       className="text-blue-600 text-xs underline no-print"
-                      onClick={() => setSelectedChems([...selectedChems, ""])}
+                      onClick={() =>
+                        setSelectedChems([...selectedChems, ""])
+                      }
                     >
                       + Add another chemical
                     </button>
@@ -380,6 +434,7 @@
 
           {/* SAFETY INFO */}
           <h2 className="font-semibold mt-2 text-sm">Chemical Safety Information</h2>
+
           <div className="text-xs font-semibold">
             Signal Word (Most Restrictive):{" "}
             <span className="font-bold">
@@ -387,10 +442,10 @@
                 const words = selectedChems
                   .map(c => {
                     const found = chemicalOptions.find(x => x.chemical === c);
-                    return found && found.signal ? found.signal.toUpperCase() : "";
+                    return found && found.signal ? found.signal : "";
                   })
-                  .filter(Boolean);
-                
+                  .filter(w => w !== "");
+                  
                 if (words.includes("DANGER")) return "DANGER";
                 if (words.includes("WARNING")) return "WARNING";
                 if (words.includes("CAUTION")) return "CAUTION";
@@ -409,6 +464,7 @@
                 <th className="border">WALES</th>
               </tr>
             </thead>
+
             <tbody>
               {selectedChems.map((chem, i) => {
                 const full = chemicalOptions.find(c => c.chemical === chem);
@@ -427,6 +483,7 @@
 
           {/* PESTS, DISEASES, WEED MGMT, PPE */}
           <h2 className="font-semibold mt-2 text-sm">Pests, Diseases & PPE</h2>
+
           <div className="grid grid-cols-4 gap-4">
             <div>
               <h4 className="font-semibold underline text-xs mb-1">Pests</h4>
@@ -472,7 +529,10 @@
 
                   const manuallyChecked = manualPPE.includes(item);
                   const isMask = item === "Respirator/Mask";
-                  const isChecked = isMask ? (needsMaskFromChemical || manuallyChecked) : manuallyChecked;
+
+                  const isChecked = isMask
+                    ? needsMaskFromChemical || manuallyChecked
+                    : manuallyChecked;
 
                   return (
                     <label key={item} className="flex items-center">
@@ -482,9 +542,12 @@
                         checked={isChecked}
                         onChange={(e) => {
                           const checked = e.target.checked;
+
                           setManualPPE(prev => {
+                            const hasItem = prev.includes(item);
+
                             if (checked) {
-                              return prev.includes(item) ? prev : [...prev, item];
+                              return hasItem ? prev : [...prev, item];
                             } else {
                               return prev.filter(p => p !== item);
                             }
@@ -504,7 +567,7 @@
             <h2 className="font-bold text-sm mb-1">Emergency Information</h2>
             <div className="border p-2 rounded bg-red-50 text-xs">
               <p><strong>In an emergency, contact:</strong> 911</p>
-              <p><strong>Poison Control:</strong> 1-800-222-1222</p>
+              <p><strong>Poison Control:</strong>  1-800-222-1222</p>
             </div>
           </div>
 
@@ -524,17 +587,20 @@
             placeholder="Enter crop, block, or greenhouse zones treated..."
           ></textarea>
 
-          {/* REFERENCE LINKS */}
           <div className="no-print">
             <h2 className="font-semibold mt-3 text-sm">Chemical Reference Links</h2>
+
             <div className="border rounded bg-white p-2 text-xs space-y-2">
               {Array.from(new Set(selectedChems.filter(Boolean))).length === 0 && (
-                <div className="text-gray-500 italic">Select a chemical to view reference links.</div>
+                <div className="text-gray-500 italic">
+                  Select a chemical to view reference links.
+                </div>
               )}
 
               {Array.from(new Set(selectedChems.filter(Boolean))).map((chem) => (
                 <div key={chem} className="border rounded p-2 bg-gray-50">
                   <div className="font-semibold mb-1">{chem}</div>
+
                   <div className="flex flex-wrap gap-2">
                     {makeLinksForChemical(chem).map((l) => (
                       <a
@@ -553,11 +619,15 @@
             </div>
           </div>
 
-          {/* FOOTER */}
+          {/* FOOTER / CREDIT */}
           <div className="text-center text-[10px] text-gray-500 mt-4 pt-2 border-t">
-            Page formatted by <span className="font-semibold">Jacob Imel</span>. For questions email{" "}
-            <a href="mailto:imeljacob@gmail.com" className="underline">imeljacob@gmail.com</a>.
+            Page formatted by <span className="font-semibold">Jacob Imel</span>.{" "}
+            For questions email{" "}
+            <a href="mailto:imeljacob@gmail.com" className="underline">
+              imeljacob@gmail.com
+            </a>.
           </div>
+
         </div>
       );
     }
