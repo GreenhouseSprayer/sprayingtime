@@ -466,8 +466,9 @@
               <div className="flex flex-col gap-1 text-xs ml-4">
                 {PPE_ITEMS.map(item => {
                   const needsMaskFromChemical = selectedChems.some(c => {
+                    if (!c) return false;
                     const f = chemicalOptions.find(x => x.chemical === c);
-                    return f && f.mask ? f.mask.toLowerCase().includes("mask") : false;
+                    return f?.mask ? f.mask.toLowerCase().includes("mask") : false;
                   });
 
                   const manuallyChecked = manualPPE.includes(item);
