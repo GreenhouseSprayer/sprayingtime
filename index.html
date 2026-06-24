@@ -47,7 +47,6 @@
   <div id="root"></div>
 
   <script>
-    // Pure, browser-native JavaScript version (No Babel required)
     const e = React.createElement;
 
     const MAX_CHEMS = 6;
@@ -79,37 +78,46 @@
       const [error, setError] = React.useState("");
       const [manualPPE, setManualPPE] = React.useState([]);
       
-      // Tracking state for target issues
       const [selectedPests, setSelectedPests] = React.useState([]);
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      // Corrected Sheets URLs matching explicit tab target properties
       const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=0&single=true&output=csv";
       const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
 
       React.useEffect(() => {
-        // Check if data was previously saved to clear immediate dependency errors
+        // 1. Instantly load local memory database first if it exists
         const cachedChems = localStorage.getItem("cached_chemicals");
+        let localDataLoaded = false;
+        
         if (cachedChems) {
           try {
-            setChemicalOptions(JSON.parse(cachedChems));
-            setError(""); 
+            const parsedCache = JSON.parse(cachedChems);
+            if (parsedCache && parsedCache.length > 0) {
+              setChemicalOptions(parsedCache);
+              setError(""); // Securely clear error layout right away
+              localDataLoaded = true;
+            }
           } catch(e) {
             localStorage.removeItem("cached_chemicals");
           }
         }
 
+        // Set baseline prompt if nothing is cached yet
+        if (!localDataLoaded) {
+          setError("Please upload your chemical sheet CSV manually below to begin.");
+        }
+
+        // 2. Quiet web sync attempt (won't interrupt with error banners if cache works)
         fetch(chemicalSheetUrl)
           .then(res => res.text())
           .then(data => {
-            if (!data || data.indexOf("<html") !== -1) throw new Error("Invalid Sheet Data");
+            if (!data || data.indexOf("<html") !== -1) throw new Error();
             parseChemicalCSV(data, true);
           })
           .catch(() => {
-            if (!localStorage.getItem("cached_chemicals")) {
-              setError("Unable to fetch chemical sheet — upload CSV manually.");
-            }
+            // Log quietly if fetching fails but we already have offline local data ready
+            console.log("Using browser offline cached database data.");
           });
 
         fetch(applicatorSheetUrl)
@@ -153,11 +161,16 @@
             })
             .filter(c => c && c.chemical);
 
-          setChemicalOptions(chemicals);
-          setError(""); // Clears error bar upon successful parse
-          
-          if (shouldCache) {
-            localStorage.setItem("cached_chemicals", JSON.stringify(chemicals));
+          if(chemicals.length > 0) {
+            setChemicalOptions(chemicals);
+            setError(""); // Destroys error layout box completely
+            if (shouldCache) {
+              localStorage.setItem("cached_chemicals", JSON.stringify(chemicals));
+            }
+          } else {
+            if(!localStorage.getItem("cached_chemicals")) {
+               setError("The uploaded file didn't seem to have valid rows. Check your headers.");
+            }
           }
         } catch (err) {
           setError("Error parsing the chemical sheet.");
@@ -218,17 +231,17 @@
         e('div', { className: 'flex items-center gap-3' },
           e('h1', { className: 'text-2xl font-bold' }, 'Spray Plan')
         ),
-        error && e('div', { className: 'bg-red-200 text-red-900 p-2 rounded' },
-          error,
-          e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block' })
+        error && e('div', { className: 'bg-red-200 text-red-900 p-3 rounded border border-red-300' },
+          e('p', { className: 'font-semibold mb-1' }, error),
+          e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block text-sm text-gray-800' })
         ),
-        !error && e('div', { className: 'no-print text-xs text-gray-500' }, 
-          e('label', { className: 'cursor-pointer underline text-blue-600 mr-2' }, 'Update CSV Manually', 
+        !error && e('div', { className: 'no-print text-xs text-gray-500 bg-green-50 p-2 rounded border border-green-200 flex justify-between items-center' }, 
+          e('span', null, ` Database Ready: ${chemicalOptions.length} chemicals loaded.`),
+          e('label', { className: 'cursor-pointer underline text-blue-600 font-medium hover:text-blue-800' }, 'Re-upload / Update CSV', 
             e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'hidden' })
-          ),
-          chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
+          )
         ),
-        e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print', onClick: () => window.print() }, 'Print / Save PDF'),
+        e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print hover:bg-blue-600 transition-colors', onClick: () => window.print() }, 'Print / Save PDF'),
         
         // Form Section
         e('div', { className: 'grid grid-cols-2 gap-2' },
@@ -267,7 +280,7 @@
             selectedChems.map((chem, i) => {
               const full = chem ? chemicalOptions.find(c => c.chemical === chem) : null;
               return e('tr', { key: i },
-                e('td', { className: 'border' },
+                e('td', { className: 'border', style: { width: '30%' } },
                   e('select', {
                     className: 'w-full border compact-input rounded',
                     value: chem,
@@ -406,7 +419,7 @@
         // Footer
         e('div', { className: 'text-center text-[10px] text-gray-500 mt-4 pt-2 border-t' },
           'Page formatted by ', e('span', { className: 'font-semibold' }, 'Jacob Imel'), '. For questions email ', e('a', { href: 'mailto:imeljacob@gmail.com', className: 'underline' }, 'imeljacob@gmail.com'), '.'
-        )
+         )
       );
     }
 
