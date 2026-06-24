@@ -220,4 +220,174 @@
                 applicators.map((a, idx) => e('option', { key: idx, value: a }, a))
               )
             ),
-            e('div', null, e('label', { className: 'text-xs font-medium' }, 'Method'), e('input', {
+            e('div', null, e('label', { className: 'text-xs font-medium' }, 'Method'), e('input', { type: 'text', className: 'w-full border compact-input rounded', value: method, onChange: ev => setMethod(ev.target.value), placeholder: 'e.g. Foliar, Drench, Broadcast...' }))
+          ),
+          e('div', { className: 'space-y-2' },
+            e('div', null, e('label', { className: 'text-xs font-medium' }, 'Area Treated'), e('input', { type: 'text', className: 'w-full border compact-input rounded' })),
+            e('div', null, e('label', { className: 'text-xs font-medium' }, 'Equipment'), e('input', { type: 'text', className: 'w-full border compact-input rounded', value: equipment, onChange: ev => setEquipment(ev.target.value), placeholder: 'e.g. 100 Gallon Sprayer, Backpack...' })),
+            e('div', { className: 'grid grid-cols-2 gap-2' },
+              e('div', null, e('label', { className: 'text-xs font-medium' }, 'Wind / Direction'), e('input', { type: 'text', className: 'w-full border compact-input rounded', placeholder: '10 mph NW' })),
+              e('div', null, e('label', { className: 'text-xs font-medium' }, 'Temperature'), e('div', { className: 'relative' }, e('input', { type: 'text', className: 'w-full border compact-input rounded pr-8', placeholder: '72' }), e('span', { className: 'absolute right-2 top-[6px] text-xs text-gray-600' }, '°F')))
+            )
+          )
+        ),
+
+        // Chemical Dropdown Grid Area
+        e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Chemicals Applied'),
+        e('table', { className: 'w-full border text-xs' },
+          e('thead', { className: 'bg-gray-200' },
+            e('tr', null, e('th', { className: 'border' }, 'Chemical'), e('th', { className: 'border' }, 'EPA #'), e('th', { className: 'border' }, 'AI'), e('th', { className: 'border' }, 'REI'), e('th', { className: 'border' }, 'MoA'))
+          ),
+          e('tbody', null,
+            selectedChems.map((chem, i) => {
+              const full = chem ? chemicalOptions.find(c => c.chemical === chem) : null;
+              return e('tr', { key: i },
+                e('td', { className: 'border w-1/3' },
+                  e('select', {
+                    className: 'w-full border compact-input rounded',
+                    value: chem,
+                    onChange: ev => { const copy = [...selectedChems]; copy[i] = ev.target.value; setSelectedChems(copy); }
+                  },
+                    e('option', { value: '' }, 'Select…'),
+                    chemicalOptions.map((c, idx) => e('option', { key: idx, value: c.chemical }, c.chemical))
+                  )
+                ),
+                e('td', { className: 'border' }, full ? full.epaReg : ""),
+                e('td', { className: 'border' }, full ? full.ai : ""),
+                e('td', { className: 'border' }, full ? full.rei : ""),
+                e('td', { className: 'border' }, full ? full.moA : "")
+              );
+            }),
+            selectedChems.length < MAX_CHEMS && e('tr', null,
+              e('td', { colSpan: '5', className: 'border text-left' },
+                e('button', { type: 'button', className: 'text-blue-600 text-xs underline no-print', onClick: () => setSelectedChems([...selectedChems, ""]) }, '+ Add another chemical')
+              )
+            )
+          )
+        ),
+
+        // Safety Info Grid Area
+        e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Chemical Safety Information'),
+        e('div', { className: 'text-xs font-semibold' }, 'Signal Word (Most Restrictive): ', e('span', { className: 'font-bold' }, restrictiveSignalWord)),
+        e('table', { className: 'w-full border text-xs' },
+          e('thead', { className: 'bg-gray-200' },
+            e('tr', null, e('th', { className: 'border' }, 'Function'), e('th', { className: 'border' }, 'Measurement per 100 gallons'), e('th', { className: 'border' }, 'Stage Active'), e('th', { className: 'border' }, 'Warnings / Notes'), e('th', { className: 'border' }, 'WALES'))
+          ),
+          e('tbody', null,
+            selectedChems.map((chem, i) => {
+              const full = chem ? chemicalOptions.find(c => c.chemical === chem) : null;
+              return e('tr', { key: i },
+                e('td', { className: 'border' }, full ? (full.function || full.moA || "") : ""),
+                e('td', { className: 'border' }, full ? full.measurement : ""),
+                e('td', { className: 'border' }, full ? full.stage : ""),
+                e('td', { className: 'border' }, full ? full.warn : ""),
+                e('td', { className: 'border' }, full ? full.wales : "")
+              );
+            })
+          )
+        ),
+
+        // Targets Checkbox List
+        e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Pests, Diseases & PPE'),
+        e('div', { className: 'grid grid-cols-4 gap-4' },
+          e('div', null, 
+            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Pests'), 
+            e('div', { className: 'flex flex-col gap-1 text-xs' }, PESTS.map(item => 
+              e('label', { key: item, className: 'flex items-center' }, 
+                e('input', { 
+                  type: 'checkbox', 
+                  className: 'mr-1',
+                  checked: selectedPests.includes(item),
+                  onChange: () => toggleSelection(item, selectedPests, setSelectedPests)
+                }), 
+                item
+              )))
+          ),
+          e('div', null, 
+            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Diseases'), 
+            e('div', { className: 'flex flex-col gap-1 text-xs' }, DISEASES.map(item => 
+              e('label', { key: item, className: 'flex items-center' }, 
+                e('input', { 
+                  type: 'checkbox', 
+                  className: 'mr-1',
+                  checked: selectedDiseases.includes(item),
+                  onChange: () => toggleSelection(item, selectedDiseases, setSelectedDiseases)
+                }), 
+                item
+              )))
+          ),
+          e('div', null, 
+            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Weed Management'), 
+            e('div', { className: 'flex flex-col gap-1 text-xs' }, WEED_MANAGEMENT.map(item => 
+              e('label', { key: item, className: 'flex items-center' }, 
+                e('input', { 
+                  type: 'checkbox', 
+                  className: 'mr-1',
+                  checked: selectedWeeds.includes(item),
+                  onChange: () => toggleSelection(item, selectedWeeds, setSelectedWeeds)
+                }), 
+                item
+              )))
+          ),
+          e('div', null, e('h4', { className: 'font-semibold text-xs mb-1 ml-4' }, 'Required PPE'),
+            e('div', { className: 'flex flex-col gap-1 text-xs ml-4' },
+              PPE_ITEMS.map(item => {
+                const isMask = item === "Respirator/Mask";
+                const isChecked = isMask ? (needsMaskFromChemical || manualPPE.includes(item)) : manualPPE.includes(item);
+                return e('label', { key: item, className: 'flex items-center' },
+                  e('input', {
+                    type: 'checkbox',
+                    className: 'mr-1',
+                    checked: isChecked,
+                    onChange: ev => {
+                      const checked = ev.target.checked;
+                      setManualPPE(prev => checked ? (prev.includes(item) ? prev : [...prev, item]) : prev.filter(p => p !== item));
+                    }
+                  }),
+                  item
+                );
+              })
+            )
+          )
+        ),
+
+        // Emergency Notification Row
+        e('div', { className: 'border-t pt-3 mt-4' },
+          e('h2', { className: 'font-bold text-sm mb-1' }, 'Emergency Information'),
+          e('div', { className: 'border p-2 rounded bg-red-50 text-xs' },
+            e('p', null, e('strong', null, 'In an emergency, contact: '), '911'),
+            e('p', null, e('strong', null, 'Poison Control: '), '1-800-222-1222')
+          )
+        ),
+
+        // Narrative Fields
+        e('h2', { className: 'font-semibold text-sm mt-3' }, 'Total Amount Sprayed'),
+        e('input', { type: 'text', className: 'w-full border rounded p-2 compact-input', placeholder: 'Enter total volume applied (e.g. 25 gallons)' }),
+        e('h2', { className: 'font-semibold text-sm mt-3' }, 'What Was Treated'),
+        e('textarea', { className: 'w-full border rounded p-2 compact-input', rows: '2', placeholder: 'Enter crop, block, or greenhouse zones treated...' }),
+
+        // Documentation Links
+        e('div', { className: 'no-print' },
+          e('h2', { className: 'font-semibold mt-3 text-sm' }, 'Chemical Reference Links'),
+          e('div', { className: 'border rounded bg-white p-2 text-xs space-y-2' },
+            selectedChems.filter(Boolean).length === 0 ? e('div', { className: 'text-gray-500 italic' }, 'Select a chemical to view reference links.') : 
+            Array.from(new Set(selectedChems.filter(Boolean))).map(chem => e('div', { key: chem, className: 'border rounded p-2 bg-gray-50' },
+              e('div', { className: 'font-semibold mb-1' }, chem),
+              e('div', { className: 'flex flex-wrap gap-2' }, makeLinksForChemical(chem).map(l => e('a', { key: l.label, href: l.url, target: '_blank', rel: 'noopener noreferrer', className: 'text-blue-600 underline' }, `${l.label} ↗`)))
+            ))
+          )
+        ),
+
+        // Document Author Footer Footer
+        e('div', { className: 'text-center text-[10px] text-gray-500 mt-4 pt-2 border-t' },
+          'Page formatted by ', e('span', { className: 'font-semibold' }, 'Jacob Imel'), '. For questions email ', e('a', { href: 'mailto:imeljacob@gmail.com', className: 'underline' }, 'imeljacob@gmail.com'), '.'
+        )
+      );
+    }
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(e(SprayPlanBuilder));
+  </script>
+</body>
+</html>
