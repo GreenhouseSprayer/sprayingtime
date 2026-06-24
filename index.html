@@ -89,13 +89,28 @@
       const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
 
       React.useEffect(() => {
+        // Check if data was previously saved to clear immediate dependency errors
+        const cachedChems = localStorage.getItem("cached_chemicals");
+        if (cachedChems) {
+          try {
+            setChemicalOptions(JSON.parse(cachedChems));
+            setError(""); 
+          } catch(e) {
+            localStorage.removeItem("cached_chemicals");
+          }
+        }
+
         fetch(chemicalSheetUrl)
           .then(res => res.text())
           .then(data => {
             if (!data || data.indexOf("<html") !== -1) throw new Error("Invalid Sheet Data");
-            parseChemicalCSV(data);
+            parseChemicalCSV(data, true);
           })
-          .catch(() => setError("Unable to fetch chemical sheet — upload CSV manually."));
+          .catch(() => {
+            if (!localStorage.getItem("cached_chemicals")) {
+              setError("Unable to fetch chemical sheet — upload CSV manually.");
+            }
+          });
 
         fetch(applicatorSheetUrl)
           .then(res => res.text())
@@ -106,7 +121,7 @@
           .catch(() => {});
       }, []);
 
-      function parseChemicalCSV(data) {
+      function parseChemicalCSV(data, shouldCache = true) {
         try {
           const parsed = Papa.parse(data, {
             header: true,
@@ -139,6 +154,11 @@
             .filter(c => c && c.chemical);
 
           setChemicalOptions(chemicals);
+          setError(""); // Clears error bar upon successful parse
+          
+          if (shouldCache) {
+            localStorage.setItem("cached_chemicals", JSON.stringify(chemicals));
+          }
         } catch (err) {
           setError("Error parsing the chemical sheet.");
         }
@@ -162,7 +182,7 @@
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = ev => parseChemicalCSV(ev.target.result);
+        reader.onload = ev => parseChemicalCSV(ev.target.result, true);
         reader.readAsText(file);
       };
 
@@ -201,6 +221,12 @@
         error && e('div', { className: 'bg-red-200 text-red-900 p-2 rounded' },
           error,
           e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block' })
+        ),
+        !error && e('div', { className: 'no-print text-xs text-gray-500' }, 
+          e('label', { className: 'cursor-pointer underline text-blue-600 mr-2' }, 'Update CSV Manually', 
+            e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'hidden' })
+          ),
+          chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
         ),
         e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print', onClick: () => window.print() }, 'Print / Save PDF'),
         
