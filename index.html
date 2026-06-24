@@ -82,8 +82,7 @@
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      // Breaking up the string prevents your build tools from rewriting the URL path
-const chemicalSheetUrl = "https://docs.google.com/" + "spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
+      const chemicalSheetUrl = "https://docs.google.com/" + "spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
 
       React.useEffect(() => {
         fetch(chemicalSheetUrl)
@@ -92,7 +91,7 @@ const chemicalSheetUrl = "https://docs.google.com/" + "spreadsheets/d/e/2PACX-1v
             if (!data || data.indexOf("<html") !== -1) throw new Error("Invalid Sheet Data");
             parseUnifiedCSV(data);
           })
-          .catch(() => setError("Unable to fetch chemical sheet — upload CSV manually."));
+          .catch(() => setError("Unable to fetch data from the live sheet. You can manually upload a backup CSV below."));
       }, []);
 
       function parseUnifiedCSV(data) {
@@ -103,11 +102,117 @@ const chemicalSheetUrl = "https://docs.google.com/" + "spreadsheets/d/e/2PACX-1v
             transformHeader: (header) => header ? header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase() : ""
           });
 
-          // 1. Process Chemicals
+          // 1. Process Chemicals safely
           const chemicals = parsed.data
             .map(row => {
               const clean = {};
               for (let k in row) {
                 if (k) clean[k.toLowerCase().trim()] = (row[k] || "").trim();
               }
+              // Only map if there's actually a chemical name present
+              if (!clean["chemical"]) return null;
+
               return {
+                chemical: clean["chemical"],
+                measurement: clean["measurement"] || "",
+                epaReg: clean["epa reg #"] || "",
+                wales: clean["wales"] || "",
+                warn: clean["warnings/ notes"] || "",
+                ai: clean["ai"] || "",
+                moA: clean["moa"] || "",
+                rei: clean["rei"] || "",
+                function: clean["function"] || "",
+                stage: clean["stage active"] || "",
+                irac: clean["chemical class"] || "",
+                signal: clean["signal word"] || "",
+                mask: clean["mask needed"] || ""
+              };
+            })
+            .filter(Boolean);
+
+          setChemicalOptions(chemicals);
+
+          // 2. Process Applicators safely from the exact same file
+          const list = parsed.data
+            .map(row => {
+              const clean = {};
+              for (let k in row) {
+                if (k) clean[k.toLowerCase().trim()] = (row[k] || "").trim();
+              }
+              return clean["applicators"] || "";
+            })
+            .filter(item => item !== "");
+
+          if (list.length > 0) {
+            setApplicators([...new Set(list)]);
+          }
+        } catch (err) {
+          setError("Error parsing the spreadsheet layout.");
+        }
+      }
+
+      const handleCSVUpload = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => parseUnifiedCSV(ev.target.result);
+        reader.readAsText(file);
+      };
+
+      const toggleSelection = (item, currentList, setList) => {
+        if (currentList.includes(item)) {
+          setList(currentList.filter(i => i !== item));
+        } else {
+          setList([...currentList, item]);
+        }
+      };
+
+      const needsMaskFromChemical = selectedChems.some(c => {
+        if (!c) return false;
+        const f = chemicalOptions.find(x => x.chemical === c);
+        return f?.mask ? f.mask.toLowerCase().includes("mask") : false;
+      });
+
+      const restrictiveSignalWord = (() => {
+        const words = selectedChems
+          .map(c => {
+            if (!c) return "";
+            const found = chemicalOptions.find(x => x.chemical === c);
+            return found && found.signal ? found.signal.toUpperCase() : "";
+          })
+          .filter(Boolean);
+        if (words.includes("DANGER")) return "DANGER";
+        if (words.includes("WARNING")) return "WARNING";
+        if (words.includes("CAUTION")) return "CAUTION";
+        return "N/A";
+      })();
+
+      return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
+        e('div', { className: 'flex items-center gap-3' },
+          e('h1', { className: 'text-2xl font-bold' }, 'Spray Plan')
+        ),
+        error && e('div', { className: 'bg-red-100 text-red-900 p-2 rounded text-xs' },
+          e('p', { className: 'font-semibold mb-1' }, error),
+          e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block text-xs' })
+        ),
+        e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print', onClick: () => window.print() }, 'Print / Save PDF'),
+        
+        // Form Section
+        e('div', { className: 'grid grid-cols-2 gap-2' },
+          e('div', { className: 'space-y-2' },
+            e('div', { className: 'grid grid-cols-3 gap-2' },
+              e('div', null, e('label', { className: 'text-xs' }, 'Date'), e('input', { type: 'date', className: 'w-full border compact-input rounded' })),
+              e('div', null, e('label', { className: 'text-xs' }, 'Start Time'), e('input', { type: 'time', className: 'w-full border compact-input rounded' })),
+              e('div', null, e('label', { className: 'text-xs' }, 'Finish Time'), e('input', { type: 'time', className: 'w-full border compact-input rounded' }))
+            ),
+            e('div', null,
+              e('label', { className: 'text-xs' }, 'Applicator'),
+              e('select', { className: 'w-full border compact-input rounded', value: applicator, onChange: ev => setApplicator(ev.target.value) },
+                e('option', { value: '' }, 'Select Applicator...'),
+                applicators.map((a, idx) => e('option', { key: idx, value: a }, a))
+              )
+            ),
+            e('div', null, e('label', { className: 'text-xs' }, 'Method'), e('input', { type: 'text', className: 'w-full border compact-input rounded', value: method, onChange: ev => setMethod(ev.target.value), placeholder: 'e.g. Foliar, Drench, Broadcast...' }))
+          ),
+          e('div', { className: 'space-y-2' },
+            e('div', null, e('label', { className: 'text-xs' }, 'Area Treated'), e('input', { type: 'text', className: 'w
