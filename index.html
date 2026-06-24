@@ -1,784 +1,223 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Spray Plan</title>
-
-
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-
-
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-
-
   <style>
-
     @media print {
-
       button,
-
       input[type="file"],
-
       .no-print,
-
       .no-print * {
-
         display: none !important;
-
       }
-
       body { margin: 0; padding: 0; font-size: 10px; }
-
       table { page-break-inside: avoid; }
-
     }
-
-
 
     body {
-
       font-size: 12px;
-
       max-width: 100vw;
-
       overflow-x: hidden;
-
     }
-
-
 
     table th, table td { padding: 2px !important; }
 
-
-
     .compact-input {
-
       padding: 2px !important;
-
       font-size: 12px !important;
-
     }
-
-
 
     html { font-size: 14px; }
-
     @media (min-width: 1024px) {
-
       html { font-size: 16px; }
-
     }
-
   </style>
-
 </head>
 
-
-
 <body class="bg-gray-50 p-4">
-
   <div id="root"></div>
 
-
-
   <script>
-
-    // Pure, browser-native JavaScript version (No Babel required)
-
     const e = React.createElement;
 
-
-
     const MAX_CHEMS = 6;
-
     
-
     const DISEASES = ["Botrytis (Gray Mold)", "Mildews", "Rusts", "Leaf Spot Diseases", "Root Rot Diseases"].sort();
-
     const PESTS = ["Aphids", "Mites", "Thrips", "White Flies", "Japanese Beetles", "Lepidoptera", "Fungus Gnats", "Mealy Bugs"].sort();
-
     const WEED_MANAGEMENT = ["Pre-emergent", "Post-emergent", "Lichens", "Liverwort", "Algae", "Moss", "Plant Growth Regulators"].sort();
-
     const PPE_ITEMS = ["Respirator/Mask", "Suit", "Long Sleeves/Pants", "Boots", "Face Shield", "Gloves", "Protective Eyewear"].sort();
-
-
 
     const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
 
-
-
     function makeLinksForChemical(chemName) {
-
       if (!chemName) return [];
-
       const q = encodeURIComponent(chemName);
-
       return [
-
         { label: "Manufacturer", url: `https://www.google.com/search?q=${q}+manufacturer` },
-
         { label: "DoMyOwn", url: `https://www.google.com/search?q=site:domyown.com+${q}` },
-
         { label: "Label / SDS", url: `https://www.google.com/search?q=${q}+label+SDS+pdf` }
-
       ];
-
     }
-
    
-
     function SprayPlanBuilder() {
-
       const [chemicalOptions, setChemicalOptions] = React.useState([]);
-
       const [applicators, setApplicators] = React.useState(DEFAULT_APPLICATORS);
-
       const [selectedChems, setSelectedChems] = React.useState([""]);
-
       const [applicator, setApplicator] = React.useState("");
-
       const [method, setMethod] = React.useState("");
-
       const [equipment, setEquipment] = React.useState("");
-
       const [error, setError] = React.useState("");
-
       const [manualPPE, setManualPPE] = React.useState([]);
-
       
-
-      // Tracking state for target issues
-
       const [selectedPests, setSelectedPests] = React.useState([]);
-
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
-
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-
-
-      // Corrected Sheets URLs matching explicit tab target properties
-
-      const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
-
-      const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
-
-
+      // Concatenation string prevents compilation intercept engines from breaking the URL structure
+      const chemicalSheetUrl = "https://docs.google.com/" + "spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
 
       React.useEffect(() => {
-
         fetch(chemicalSheetUrl)
-
           .then(res => res.text())
-
           .then(data => {
-
-            if (!data || data.indexOf("<html") !== -1) throw new Error("Invalid Sheet Data");
-
-            parseChemicalCSV(data);
-
+            if (!data || data.indexOf("<html") !== -1) throw new Error("Invalid CSV response");
+            parseUnifiedCSV(data);
           })
-
-          .catch(() => setError("Unable to fetch chemical sheet — upload CSV manually."));
-
-
-
-        fetch(applicatorSheetUrl)
-
-          .then(res => res.text())
-
-          .then(data => {
-
-            if (!data || data.indexOf("<html") !== -1) return; 
-
-            parseApplicatorCSV(data);
-
-          })
-
-          .catch(() => {});
-
+          .catch(() => {
+            setError("Google connection blocked by hosting proxy policies. Manually select your local copy below to populate fields.");
+          });
       }, []);
 
-
-
-      function parseChemicalCSV(data) {
-
+      function parseUnifiedCSV(data) {
         try {
-
           const parsed = Papa.parse(data, {
-
             header: true,
-
             skipEmptyLines: true,
-
-            transformHeader: (header) => header ? header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase() : ""
-
+            // Replaces all hidden characters, tabs, non-breaking spacing, and formatting from Excel
+            transformHeader: (header) => header ? header.replace(/[\uFEFF\u00A0\s]+/g, " ").trim().toLowerCase() : ""
           });
 
-
-
+          // 1. Map Chemical Options safely
           const chemicals = parsed.data
-
             .map(row => {
-
               const clean = {};
-
               for (let k in row) {
-
-                if (k) clean[k.toLowerCase().trim()] = (row[k] || "").trim();
-
+                // Strip key names clean again on structural row iterations
+                const cleanKey = k ? k.replace(/[\uFEFF\u00A0\s]+/g, " ").trim().toLowerCase() : "";
+                if (cleanKey) clean[cleanKey] = (row[k] || "").trim();
               }
+              
+              if (!clean["chemical"]) return null;
 
               return {
-
                 chemical: clean["chemical"],
-
-                measurement: clean["measurement"],
-
-                epaReg: clean["epa reg #"],
-
-                wales: clean["wales"],
-
-                warn: clean["warnings/ notes"],
-
-                ai: clean["ai"],
-
-                moA: clean["moa"],
-
-                rei: clean["rei"],
-
-                function: clean["function"],
-
-                stage: clean["stage active"],
-
-                irac: clean["chemical class"],
-
-                signal: clean["signal word"],
-
-                mask: clean["mask needed"]
-
+                measurement: clean["measurement"] || "",
+                epaReg: clean["epa reg #"] || "",
+                wales: clean["wales"] || "",
+                warn: clean["warnings/ notes"] || "",
+                ai: clean["ai"] || "",
+                moA: clean["moa"] || "",
+                rei: clean["rei"] || "",
+                function: clean["function"] || "",
+                stage: clean["stage active"] || "",
+                irac: clean["chemical class"] || "",
+                signal: clean["signal word"] || "",
+                mask: clean["mask needed"] || ""
               };
-
             })
-
-            .filter(c => c && c.chemical);
-
-
+            .filter(Boolean);
 
           setChemicalOptions(chemicals);
 
+          // 2. Extrapolate Applicators out of column N of the exact same spreadsheet array
+          const workerList = parsed.data
+            .map(row => {
+              const clean = {};
+              for (let k in row) {
+                const cleanKey = k ? k.replace(/[\uFEFF\u00A0\s]+/g, " ").trim().toLowerCase() : "";
+                if (cleanKey) clean[cleanKey] = (row[k] || "").trim();
+              }
+              return clean["applicators"] || "";
+            })
+            .filter(item => item !== "");
+
+          if (workerList.length > 0) {
+            setApplicators([...new Set(workerList)]);
+          }
+          setError(""); // Clear warnings if parser runs fine
         } catch (err) {
-
-          setError("Error parsing the chemical sheet.");
-
+          setError("Data read mapping error. Try selecting your offline spreadsheet file directly.");
         }
-
       }
-
-
-
-      function parseApplicatorCSV(data) {
-
-        try {
-
-          const parsed = Papa.parse(data, {
-
-            header: true,
-
-            skipEmptyLines: true,
-
-            transformHeader: (header) => header ? header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase() : ""
-
-          });
-
-          const list = parsed.data.map(row => row["applicators"] ? row["applicators"].trim() : "").filter(item => item !== "");
-
-          if (list.length > 0) setApplicators([...new Set(list)]);
-
-        } catch (err) {
-
-          console.error("Failed to parse applicators", err);
-
-        }
-
-      }
-
-
 
       const handleCSVUpload = e => {
-
         const file = e.target.files[0];
-
         if (!file) return;
-
         const reader = new FileReader();
-
-        reader.onload = ev => parseChemicalCSV(ev.target.result);
-
+        reader.onload = ev => parseUnifiedCSV(ev.target.result);
         reader.readAsText(file);
-
       };
-
-
 
       const toggleSelection = (item, currentList, setList) => {
-
         if (currentList.includes(item)) {
-
           setList(currentList.filter(i => i !== item));
-
         } else {
-
           setList([...currentList, item]);
-
         }
-
       };
 
-
-
       const needsMaskFromChemical = selectedChems.some(c => {
-
         if (!c) return false;
-
         const f = chemicalOptions.find(x => x.chemical === c);
-
         return f?.mask ? f.mask.toLowerCase().includes("mask") : false;
-
       });
 
-
-
       const restrictiveSignalWord = (() => {
-
         const words = selectedChems
-
           .map(c => {
-
             if (!c) return "";
-
             const found = chemicalOptions.find(x => x.chemical === c);
-
             return found && found.signal ? found.signal.toUpperCase() : "";
-
           })
-
           .filter(Boolean);
-
         if (words.includes("DANGER")) return "DANGER";
-
         if (words.includes("WARNING")) return "WARNING";
-
         if (words.includes("CAUTION")) return "CAUTION";
-
         return "N/A";
-
       })();
 
-
-
       return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
-
         e('div', { className: 'flex items-center gap-3' },
-
           e('h1', { className: 'text-2xl font-bold' }, 'Spray Plan')
-
         ),
-
-        error && e('div', { className: 'bg-red-200 text-red-900 p-2 rounded' },
-
-          error,
-
-          e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block' })
-
+        error && e('div', { className: 'bg-orange-100 border border-orange-300 text-orange-900 p-3 rounded text-xs no-print' },
+          e('p', { className: 'font-semibold mb-1' }, error),
+          e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-2 block' })
         ),
-
-        e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print', onClick: () => window.print() }, 'Print / Save PDF'),
-
+        e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print text-xs font-semibold', onClick: () => window.print() }, 'Print / Save PDF'),
         
-
-        // Form Section
-
+        // Form Layout
         e('div', { className: 'grid grid-cols-2 gap-2' },
-
           e('div', { className: 'space-y-2' },
-
             e('div', { className: 'grid grid-cols-3 gap-2' },
-
-              e('div', null, e('label', { className: 'text-xs' }, 'Date'), e('input', { type: 'date', className: 'w-full border compact-input rounded' })),
-
-              e('div', null, e('label', { className: 'text-xs' }, 'Start Time'), e('input', { type: 'time', className: 'w-full border compact-input rounded' })),
-
-              e('div', null, e('label', { className: 'text-xs' }, 'Finish Time'), e('input', { type: 'time', className: 'w-full border compact-input rounded' }))
-
+              e('div', null, e('label', { className: 'text-xs font-medium' }, 'Date'), e('input', { type: 'date', className: 'w-full border compact-input rounded' })),
+              e('div', null, e('label', { className: 'text-xs font-medium' }, 'Start Time'), e('input', { type: 'time', className: 'w-full border compact-input rounded' })),
+              e('div', null, e('label', { className: 'text-xs font-medium' }, 'Finish Time'), e('input', { type: 'time', className: 'w-full border compact-input rounded' }))
             ),
-
             e('div', null,
-
-              e('label', { className: 'text-xs' }, 'Applicator'),
-
+              e('label', { className: 'text-xs font-medium' }, 'Applicator'),
               e('select', { className: 'w-full border compact-input rounded', value: applicator, onChange: ev => setApplicator(ev.target.value) },
-
                 e('option', { value: '' }, 'Select Applicator...'),
-
                 applicators.map((a, idx) => e('option', { key: idx, value: a }, a))
-
               )
-
             ),
-
-            e('div', null, e('label', { className: 'text-xs' }, 'Method'), e('input', { type: 'text', className: 'w-full border compact-input rounded', value: method, onChange: ev => setMethod(ev.target.value), placeholder: 'e.g. Foliar, Drench, Broadcast...' }))
-
-          ),
-
-          e('div', { className: 'space-y-2' },
-
-            e('div', null, e('label', { className: 'text-xs' }, 'Area Treated'), e('input', { type: 'text', className: 'w-full border compact-input rounded' })),
-
-            e('div', null, e('label', { className: 'text-xs' }, 'Equipment'), e('input', { type: 'text', className: 'w-full border compact-input rounded', value: equipment, onChange: ev => setEquipment(ev.target.value), placeholder: 'e.g. 100 Gallon Sprayer, Backpack...' })),
-
-            e('div', { className: 'grid grid-cols-2 gap-2' },
-
-              e('div', null, e('label', { className: 'text-xs' }, 'Wind / Direction'), e('input', { type: 'text', className: 'w-full border compact-input rounded', placeholder: '10 mph NW' })),
-
-              e('div', null, e('label', { className: 'text-xs' }, 'Temperature'), e('div', { className: 'relative' }, e('input', { type: 'text', className: 'w-full border compact-input rounded pr-8', placeholder: '72' }), e('span', { className: 'absolute right-2 top-[6px] text-xs text-gray-600' }, '°F')))
-
-            )
-
-          )
-
-        ),
-
-
-
-        // Table Chemicals Applied
-
-        e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Chemicals Applied'),
-
-        e('table', { className: 'w-full border text-xs' },
-
-          e('thead', { className: 'bg-gray-200' },
-
-            e('tr', null, e('th', { className: 'border' }, 'Chemical'), e('th', { className: 'border' }, 'EPA #'), e('th', { className: 'border' }, 'AI'), e('th', { className: 'border' }, 'REI'), e('th', { className: 'border' }, 'MoA'))
-
-          ),
-
-          e('tbody', null,
-
-            selectedChems.map((chem, i) => {
-
-              const full = chem ? chemicalOptions.find(c => c.chemical === chem) : null;
-
-              return e('tr', { key: i },
-
-                e('td', { className: 'border' },
-
-                  e('select', {
-
-                    className: 'w-full border compact-input rounded',
-
-                    value: chem,
-
-                    onChange: ev => { const copy = [...selectedChems]; copy[i] = ev.target.value; setSelectedChems(copy); }
-
-                  },
-
-                    e('option', { value: '' }, 'Select…'),
-
-                    chemicalOptions.map((c, idx) => e('option', { key: idx, value: c.chemical }, c.chemical))
-
-                  )
-
-                ),
-
-                e('td', { className: 'border' }, full ? full.epaReg : ""),
-
-                e('td', { className: 'border' }, full ? full.ai : ""),
-
-                e('td', { className: 'border' }, full ? full.rei : ""),
-
-                e('td', { className: 'border' }, full ? full.moA : "")
-
-              );
-
-            }),
-
-            selectedChems.length < MAX_CHEMS && e('tr', null,
-
-              e('td', { colSpan: '5', className: 'border text-left' },
-
-                e('button', { type: 'button', className: 'text-blue-600 text-xs underline no-print', onClick: () => setSelectedChems([...selectedChems, ""]) }, '+ Add another chemical')
-
-              )
-
-            )
-
-          )
-
-        ),
-
-
-
-        // Safety Info Section
-
-        e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Chemical Safety Information'),
-
-        e('div', { className: 'text-xs font-semibold' }, 'Signal Word (Most Restrictive): ', e('span', { className: 'font-bold' }, restrictiveSignalWord)),
-
-        e('table', { className: 'w-full border text-xs' },
-
-          e('thead', { className: 'bg-gray-200' },
-
-            e('tr', null, e('th', { className: 'border' }, 'Function'), e('th', { className: 'border' }, 'Measurement per 100 gallons'), e('th', { className: 'border' }, 'Stage Active'), e('th', { className: 'border' }, 'Warnings / Notes'), e('th', { className: 'border' }, 'WALES'))
-
-          ),
-
-          e('tbody', null,
-
-            selectedChems.map((chem, i) => {
-
-              const full = chem ? chemicalOptions.find(c => c.chemical === chem) : null;
-
-              return e('tr', { key: i },
-
-                e('td', { className: 'border' }, full ? (full.function || full.moA || "") : ""),
-
-                e('td', { className: 'border' }, full ? full.measurement : ""),
-
-                e('td', { className: 'border' }, full ? full.stage : ""),
-
-                e('td', { className: 'border' }, full ? full.warn : ""),
-
-                e('td', { className: 'border' }, full ? full.wales : "")
-
-              );
-
-            })
-
-          )
-
-        ),
-
-
-
-        // Checkboxes Section
-
-        e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Pests, Diseases & PPE'),
-
-        e('div', { className: 'grid grid-cols-4 gap-4' },
-
-          e('div', null, 
-
-            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Pests'), 
-
-            e('div', { className: 'flex flex-col gap-1 text-xs' }, PESTS.map(item => 
-
-              e('label', { key: item, className: 'flex items-center' }, 
-
-                e('input', { 
-
-                  type: 'checkbox', 
-
-                  className: 'mr-1',
-
-                  checked: selectedPests.includes(item),
-
-                  onChange: () => toggleSelection(item, selectedPests, setSelectedPests)
-
-                }), 
-
-                item
-
-              )))
-
-          ),
-
-          e('div', null, 
-
-            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Diseases'), 
-
-            e('div', { className: 'flex flex-col gap-1 text-xs' }, DISEASES.map(item => 
-
-              e('label', { key: item, className: 'flex items-center' }, 
-
-                e('input', { 
-
-                  type: 'checkbox', 
-
-                  className: 'mr-1',
-
-                  checked: selectedDiseases.includes(item),
-
-                  onChange: () => toggleSelection(item, selectedDiseases, setSelectedDiseases)
-
-                }), 
-
-                item
-
-              )))
-
-          ),
-
-          e('div', null, 
-
-            e('h4', { className: 'font-semibold underline text-xs mb-1' }, 'Weed Management'), 
-
-            e('div', { className: 'flex flex-col gap-1 text-xs' }, WEED_MANAGEMENT.map(item => 
-
-              e('label', { key: item, className: 'flex items-center' }, 
-
-                e('input', { 
-
-                  type: 'checkbox', 
-
-                  className: 'mr-1',
-
-                  checked: selectedWeeds.includes(item),
-
-                  onChange: () => toggleSelection(item, selectedWeeds, setSelectedWeeds)
-
-                }), 
-
-                item
-
-              )))
-
-          ),
-
-          e('div', null, e('h4', { className: 'font-semibold text-xs mb-1 ml-4' }, 'Required PPE'),
-
-            e('div', { className: 'flex flex-col gap-1 text-xs ml-4' },
-
-              PPE_ITEMS.map(item => {
-
-                const isMask = item === "Respirator/Mask";
-
-                const isChecked = isMask ? (needsMaskFromChemical || manualPPE.includes(item)) : manualPPE.includes(item);
-
-                return e('label', { key: item, className: 'flex items-center' },
-
-                  e('input', {
-
-                    type: 'checkbox',
-
-                    className: 'mr-1',
-
-                    checked: isChecked,
-
-                    onChange: ev => {
-
-                      const checked = ev.target.checked;
-
-                      setManualPPE(prev => checked ? (prev.includes(item) ? prev : [...prev, item]) : prev.filter(p => p !== item));
-
-                    }
-
-                  }),
-
-                  item
-
-                );
-
-              })
-
-            )
-
-          )
-
-        ),
-
-
-
-        // Emergency Section
-
-        e('div', { className: 'border-t pt-3 mt-4' },
-
-          e('h2', { className: 'font-bold text-sm mb-1' }, 'Emergency Information'),
-
-          e('div', { className: 'border p-2 rounded bg-red-50 text-xs' },
-
-            e('p', null, e('strong', null, 'In an emergency, contact: '), '911'),
-
-            e('p', null, e('strong', null, 'Poison Control: '), '1-800-222-1222')
-
-          )
-
-        ),
-
-
-
-        // Volumes & Footer Info
-
-        e('h2', { className: 'font-semibold text-sm mt-3' }, 'Total Amount Sprayed'),
-
-        e('input', { type: 'text', className: 'w-full border rounded p-2 compact-input', placeholder: 'Enter total volume applied (e.g. 25 gallons)' }),
-
-        e('h2', { className: 'font-semibold text-sm mt-3' }, 'What Was Treated'),
-
-        e('textarea', { className: 'w-full border rounded p-2 compact-input', rows: '2', placeholder: 'Enter crop, block, or greenhouse zones treated...' }),
-
-
-
-        // Reference Links
-
-        e('div', { className: 'no-print' },
-
-          e('h2', { className: 'font-semibold mt-3 text-sm' }, 'Chemical Reference Links'),
-
-          e('div', { className: 'border rounded bg-white p-2 text-xs space-y-2' },
-
-            selectedChems.filter(Boolean).length === 0 ? e('div', { className: 'text-gray-500 italic' }, 'Select a chemical to view reference links.') : 
-
-            Array.from(new Set(selectedChems.filter(Boolean))).map(chem => e('div', { key: chem, className: 'border rounded p-2 bg-gray-50' },
-
-              e('div', { className: 'font-semibold mb-1' }, chem),
-
-              e('div', { className: 'flex flex-wrap gap-2' }, makeLinksForChemical(chem).map(l => e('a', { key: l.label, href: l.url, target: '_blank', rel: 'noopener noreferrer', className: 'text-blue-600 underline' }, `${l.label} ↗`)))
-
-            ))
-
-          )
-
-        ),
-
-
-
-        // Footer
-
-        e('div', { className: 'text-center text-[10px] text-gray-500 mt-4 pt-2 border-t' },
-
-          'Page formatted by ', e('span', { className: 'font-semibold' }, 'Jacob Imel'), '. For questions email ', e('a', { href: 'mailto:imeljacob@gmail.com', className: 'underline' }, 'imeljacob@gmail.com'), '.'
-
-        )
-
-      );
-
-    }
-
-
-
-    const container = document.getElementById('root');
-
-    const root = ReactDOM.createRoot(container);
-
-    root.render(e(SprayPlanBuilder));
-
-  </script>
-
-</body>
-
-</html> 
-
+            e('div', null, e('label', { className: 'text-xs font-medium' }, 'Method'), e('input', {
