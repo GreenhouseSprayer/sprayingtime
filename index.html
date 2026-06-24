@@ -82,7 +82,7 @@
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      const rawSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1v[YOUR_NEW_PUBLISHED_KEY_HERE]/pub?gid=0&single=true&output=csv";
+      const rawSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1v[https://docs.google.com/spreadsheets/d/1L7OIrJJdsIT_GQMtepEOXGb8gzlPM9JeQEUr6HDIj_8/edit?usp=drivesdk]/pub?gid=0&single=true&output=csv";
       
       // Wrapped in a reliable CORS proxy to guarantee connection from local files
       const cleanSheetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(rawSheetUrl);
