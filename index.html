@@ -51,10 +51,11 @@
 
     const MAX_CHEMS = 6;
     
-    const DISEASES = ["Botrytis (Gray Mold)", "Mildews", "Rusts", "Leaf Spot Diseases", "Root Rot Diseases"].sort();
-    const PESTS = ["Aphids", "Mites", "Thrips", "White Flies", "Japanese Beetles", "Lepidoptera", "Fungus Gnats", "Mealy Bugs"].sort();
-    const WEED_MANAGEMENT = ["Pre-emergent", "Post-emergent", "Lichens", "Liverwort", "Algae", "Moss", "Plant Growth Regulators"].sort();
-    const PPE_ITEMS = ["Respirator/Mask", "Suit", "Long Sleeves/Pants", "Boots", "Face Shield", "Gloves", "Protective Eyewear"].sort();
+    // Kept flat and safe to prevent pre-render sorting errors
+    const DISEASES = ["Botrytis (Gray Mold)", "Leaf Spot Diseases", "Mildews", "Root Rot Diseases", "Rusts"];
+    const PESTS = ["Aphids", "Fungus Gnats", "Japanese Beetles", "Lepidoptera", "Mealy Bugs", "Mites", "Thrips", "White Flies"];
+    const WEED_MANAGEMENT = ["Algae", "Lichens", "Liverwort", "Moss", "Post-emergent", "Pre-emergent", "Plant Growth Regulators"];
+    const PPE_ITEMS = ["Boots", "Face Shield", "Gloves", "Long Sleeves/Pants", "Protective Eyewear", "Respirator/Mask", "Suit"];
 
     const DEFAULT_APPLICATORS = ["Jacob Imel #154583"];
 
@@ -81,16 +82,16 @@
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      // Process manual CSV uploads safely and clean hidden spacing properties instantly
       function parseUploadedCSV(data) {
         try {
           const parsed = Papa.parse(data, {
             header: true,
             skipEmptyLines: true,
+            // Deep scrub removes literal hidden non-breaking spacing characters (\xa0) from Excel
             transformHeader: (header) => header ? header.replace(/[\uFEFF\u00A0\s]+/g, " ").trim().toLowerCase() : ""
           });
 
-          // 1. Map Chemicals
+          // 1. Safe mapping for Chemical inventory records
           const chemicals = parsed.data
             .map(row => {
               const clean = {};
@@ -119,7 +120,7 @@
 
           setChemicalOptions(chemicals);
 
-          // 2. Map Applicators
+          // 2. Safe mapping for Applicators column
           const workers = parsed.data
             .map(row => {
               const clean = {};
@@ -135,7 +136,7 @@
             setApplicators([...new Set(workers)]);
           }
         } catch (err) {
-          console.error("CSV Read Error", err);
+          console.error("CSV Engine Error:", err);
         }
       }
 
@@ -180,7 +181,7 @@
           e('h1', { className: 'text-2xl font-bold' }, 'Spray Plan')
         ),
         
-        // Permanent Upload CSV Module 
+        // Manual Database Attachment Box
         e('div', { className: 'bg-blue-50 border border-blue-200 p-3 rounded text-xs no-print' },
           e('p', { className: 'font-semibold text-blue-900 mb-1' }, 'Upload Data Base Source'),
           e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block text-xs' })
@@ -188,7 +189,7 @@
         
         e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print text-xs font-semibold', onClick: () => window.print() }, 'Print / Save PDF'),
         
-        // Main Form Section
+        // Base Logistics Row
         e('div', { className: 'grid grid-cols-2 gap-2' },
           e('div', { className: 'space-y-2' },
             e('div', { className: 'grid grid-cols-3 gap-2' },
@@ -215,7 +216,7 @@
           )
         ),
 
-        // Grid Inputs Block
+        // Core Form Grid Entries
         e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Chemicals Applied'),
         e('table', { className: 'w-full border text-xs' },
           e('thead', { className: 'bg-gray-200' },
@@ -249,7 +250,7 @@
           )
         ),
 
-        // Safety Breakdown Section
+        // Core Protection Panel Info
         e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Chemical Safety Information'),
         e('div', { className: 'text-xs font-semibold' }, 'Signal Word (Most Restrictive): ', e('span', { className: 'font-bold' }, restrictiveSignalWord)),
         e('table', { className: 'w-full border text-xs' },
@@ -270,7 +271,7 @@
           )
         ),
 
-        // Target Issue Checkboxes
+        // Checkboxes Section Area
         e('h2', { className: 'font-semibold mt-2 text-sm' }, 'Pests, Diseases & PPE'),
         e('div', { className: 'grid grid-cols-4 gap-4' },
           e('div', null, 
@@ -334,7 +335,7 @@
           )
         ),
 
-        // Emergency Panel Row
+        // Emergency Information
         e('div', { className: 'border-t pt-3 mt-4' },
           e('h2', { className: 'font-bold text-sm mb-1' }, 'Emergency Information'),
           e('div', { className: 'border p-2 rounded bg-red-50 text-xs' },
@@ -343,13 +344,13 @@
           )
         ),
 
-        // Footnotes Area
+        // Volumes & Footer Info
         e('h2', { className: 'font-semibold text-sm mt-3' }, 'Total Amount Sprayed'),
         e('input', { type: 'text', className: 'w-full border rounded p-2 compact-input', placeholder: 'Enter total volume applied (e.g. 25 gallons)' }),
         e('h2', { className: 'font-semibold text-sm mt-3' }, 'What Was Treated'),
         e('textarea', { className: 'w-full border rounded p-2 compact-input', rows: '2', placeholder: 'Enter crop, block, or greenhouse zones treated...' }),
 
-        // Web Link Generator Output
+        // Link Generator Panel
         e('div', { className: 'no-print' },
           e('h2', { className: 'font-semibold mt-3 text-sm' }, 'Chemical Reference Links'),
           e('div', { className: 'border rounded bg-white p-2 text-xs space-y-2' },
@@ -361,7 +362,7 @@
           )
         ),
 
-        // Document Identity Footer
+        // Document Author block
         e('div', { className: 'text-center text-[10px] text-gray-500 mt-4 pt-2 border-t' },
           'Page formatted by ', e('span', { className: 'font-semibold' }, 'Jacob Imel'), '. For questions email ', e('a', { href: 'mailto:imeljacob@gmail.com', className: 'underline' }, 'imeljacob@gmail.com'), '.'
         )
