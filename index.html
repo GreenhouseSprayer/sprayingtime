@@ -82,54 +82,50 @@
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=0&single=true&output=csv";
-      const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
+      // Only ONE link needed now. 
+      const rawSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=0&single=true&output=csv";
+      
+      // Wrapped in a reliable CORS proxy to guarantee connection from local files
+      const cleanSheetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(rawSheetUrl);
 
       React.useEffect(() => {
-        // 1. Instantly load local memory database first if it exists
+        // 1. Instantly load local data cache if it exists
         const cachedChems = localStorage.getItem("cached_chemicals");
+        const cachedApps = localStorage.getItem("cached_applicators");
         let localDataLoaded = false;
         
         if (cachedChems) {
           try {
-            const parsedCache = JSON.parse(cachedChems);
-            if (parsedCache && parsedCache.length > 0) {
-              setChemicalOptions(parsedCache);
-              setError(""); // Securely clear error layout right away
-              localDataLoaded = true;
-            }
+            setChemicalOptions(JSON.parse(cachedChems));
+            if (cachedApps) setApplicators(JSON.parse(cachedApps));
+            setError(""); 
+            localDataLoaded = true;
           } catch(e) {
             localStorage.removeItem("cached_chemicals");
+            localStorage.removeItem("cached_applicators");
           }
         }
 
-        // Set baseline prompt if nothing is cached yet
         if (!localDataLoaded) {
-          setError("Please upload your chemical sheet CSV manually below to begin.");
+          setError("Connecting to Google Sheets... If this banner persists, upload your CSV manually below.");
         }
 
-        // 2. Quiet web sync attempt (won't interrupt with error banners if cache works)
-        fetch(chemicalSheetUrl)
-          .then(res => res.text())
+        // 2. Single fetch rule to get everything
+        fetch(cleanSheetUrl)
+          .then(res => {
+            if (!res.ok) throw new Error();
+            return res.text();
+          })
           .then(data => {
             if (!data || data.indexOf("<html") !== -1) throw new Error();
-            parseChemicalCSV(data, true);
+            parseSingleCSV(data, true);
           })
           .catch(() => {
-            // Log quietly if fetching fails but we already have offline local data ready
-            console.log("Using browser offline cached database data.");
+            console.log("Sheet fetch blocked or offline. Falling back to browser offline cache.");
           });
-
-        fetch(applicatorSheetUrl)
-          .then(res => res.text())
-          .then(data => {
-            if (!data || data.indexOf("<html") !== -1) return; 
-            parseApplicatorCSV(data);
-          })
-          .catch(() => {});
       }, []);
 
-      function parseChemicalCSV(data, shouldCache = true) {
+      function parseSingleCSV(data, shouldCache = true) {
         try {
           const parsed = Papa.parse(data, {
             header: true,
@@ -137,6 +133,7 @@
             transformHeader: (header) => header ? header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase() : ""
           });
 
+          // Extract chemicals
           const chemicals = parsed.data
             .map(row => {
               const clean = {};
@@ -161,33 +158,36 @@
             })
             .filter(c => c && c.chemical);
 
-          if(chemicals.length > 0) {
+          // Extract applicators from the same sheet if column exists
+          const extractedApps = parsed.data
+            .map(row => {
+              for (let k in row) {
+                if (k && k.toLowerCase().trim() === "applicators") return (row[k] || "").trim();
+              }
+              return "";
+            })
+            .filter(Boolean);
+
+          if (chemicals.length > 0) {
             setChemicalOptions(chemicals);
-            setError(""); // Destroys error layout box completely
+            setError(""); 
+            
+            if (extractedApps.length > 0) {
+              const uniqueApps = [...new Set(extractedApps)];
+              setApplicators(uniqueApps);
+              if (shouldCache) localStorage.setItem("cached_applicators", JSON.stringify(uniqueApps));
+            }
+
             if (shouldCache) {
               localStorage.setItem("cached_chemicals", JSON.stringify(chemicals));
             }
           } else {
-            if(!localStorage.getItem("cached_chemicals")) {
-               setError("The uploaded file didn't seem to have valid rows. Check your headers.");
+            if (!localStorage.getItem("cached_chemicals")) {
+              setError("Data fetched but no valid rows matched. Verify your column headers.");
             }
           }
         } catch (err) {
-          setError("Error parsing the chemical sheet.");
-        }
-      }
-
-      function parseApplicatorCSV(data) {
-        try {
-          const parsed = Papa.parse(data, {
-            header: true,
-            skipEmptyLines: true,
-            transformHeader: (header) => header ? header.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").trim().toLowerCase() : ""
-          });
-          const list = parsed.data.map(row => row["applicators"] ? row["applicators"].trim() : "").filter(item => item !== "");
-          if (list.length > 0) setApplicators([...new Set(list)]);
-        } catch (err) {
-          console.error("Failed to parse applicators", err);
+          setError("Error parsing data sheet.");
         }
       }
 
@@ -195,7 +195,7 @@
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = ev => parseChemicalCSV(ev.target.result, true);
+        reader.onload = ev => parseSingleCSV(ev.target.result, true);
         reader.readAsText(file);
       };
 
@@ -236,8 +236,8 @@
           e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block text-sm text-gray-800' })
         ),
         !error && e('div', { className: 'no-print text-xs text-gray-500 bg-green-50 p-2 rounded border border-green-200 flex justify-between items-center' }, 
-          e('span', null, ` Database Ready: ${chemicalOptions.length} chemicals loaded.`),
-          e('label', { className: 'cursor-pointer underline text-blue-600 font-medium hover:text-blue-800' }, 'Re-upload / Update CSV', 
+          e('span', null, ` Live Sheet Synchronized: ${chemicalOptions.length} chemicals found.`),
+          e('label', { className: 'cursor-pointer underline text-blue-600 font-medium hover:text-blue-800' }, 'Manual CSV Import', 
             e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'hidden' })
           )
         ),
@@ -419,7 +419,7 @@
         // Footer
         e('div', { className: 'text-center text-[10px] text-gray-500 mt-4 pt-2 border-t' },
           'Page formatted by ', e('span', { className: 'font-semibold' }, 'Jacob Imel'), '. For questions email ', e('a', { href: 'mailto:imeljacob@gmail.com', className: 'underline' }, 'imeljacob@gmail.com'), '.'
-         )
+        )
       );
     }
 
