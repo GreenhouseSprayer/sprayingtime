@@ -85,8 +85,8 @@
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
       // Corrected Sheets URLs matching explicit tab target properties
-      const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=0&single=true&output=csv";
-      const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=1594882491&single=true&output=csv";
+      const chemicalSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
+      const applicatorSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?output=csv";
 
       React.useEffect(() => {
         fetch(chemicalSheetUrl)
