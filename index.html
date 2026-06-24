@@ -47,7 +47,7 @@
   <div id="root"></div>
 
   <script>
-    const e = React.createElement;
+    const e = .createElement;
 
     const MAX_CHEMS = 6;
     
@@ -82,8 +82,7 @@
       const [selectedDiseases, setSelectedDiseases] = React.useState([]);
       const [selectedWeeds, setSelectedWeeds] = React.useState([]);
 
-      // Only ONE link needed now. 
-      const rawSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZfyqtPqy898TcyxUzKJzSoOZNj-8qYXs3nRzfbI_tA2qZCaVqiQwz4fgO_jWZ4lF7Rr-a29LxiEw7/pub?gid=0&single=true&output=csv";
+      const rawSheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1v[YOUR_NEW_PUBLISHED_KEY_HERE]/pub?gid=0&single=true&output=csv";
       
       // Wrapped in a reliable CORS proxy to guarantee connection from local files
       const cleanSheetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(rawSheetUrl);
