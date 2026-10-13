@@ -215,8 +215,9 @@
       })();
 
       return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
-        e('div', { className: 'flex items-center gap-3' },
-          e('h1', { className: 'text-2xl font-bold' }, 'Spray Time!')
+        e('div', { className: 'flex items-center gap-4 mb-2' },
+          e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'h-12 w-auto' }),
+          e('h1', { className: 'text-3xl font-bold text-green-800' }, 'Spray Time!')
         ),
         error && e('div', { className: 'bg-red-200 text-red-900 p-2 rounded' },
           error,
