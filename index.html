@@ -217,7 +217,7 @@
 
      return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
         e('div', { className: 'relative flex items-center justify-center mb-4 h-20' },
-          e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'absolute left-0 h-36 w-auto mix-blend-multiply' }),
+          e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'absolute left-0 h-32 w-auto mix-blend-multiply' }),
           e('h1', { className: 'text-5xl font-bold text-green-700' }, 'Spray Time!')
         ),
         error && e('div', { className: 'bg-red-200 text-red-900 p-2 rounded' },
@@ -225,9 +225,6 @@
           e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'mt-1 block' })
         ),
         !error && e('div', { className: 'no-print text-xs text-gray-500' }, 
-          e('label', { className: 'cursor-pointer underline text-blue-600 mr-2' }, 'Update CSV Manually', 
-            e('input', { type: 'file', accept: '.csv', onChange: handleCSVUpload, className: 'hidden' })
-          ),
           chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
         ),
         e('button', { className: 'bg-blue-500 text-white px-3 py-1 rounded no-print', onClick: () => window.print() }, 'Print / Save PDF'),
