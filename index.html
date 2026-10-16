@@ -216,41 +216,18 @@
       })();
 
      return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
-       // Organized Header Row
-        e('div', { className: 'relative flex items-center justify-center mb-8 h-24 mt-2' },
-          
-          // Left Side: Logo
-          e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'absolute left-0 top-0 h-24 w-auto mix-blend-multiply' }),
-          
-          // Center: Title
-          e('h1', { className: 'text-5xl font-bold text-green-700' }, 'Spray Time!'),
-
-          // Right Side: Status Text & Print Button
-          e('div', { className: 'absolute right-0 top-0 flex flex-col items-end gap-2 no-print' },
-            !error && e('div', { className: 'text-xs text-gray-500 font-medium' }, 
-              chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
-            ),
-            e('button', { 
-              className: 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded shadow transition-colors', 
-              onClick: () => window.print() 
-            }, 'Print / Save PDF')
-          )
-        ),
-        // Organized Header Row with Web and Spider decorations
+       // Organized Header Row with Web and Large Spider decorations
         e('div', { className: 'relative flex items-center justify-center mb-8 h-28 mt-2 overflow-hidden' },
           // Left Side: Logo & Left Cobweb
           e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'absolute left-0 top-0 h-24 w-auto mix-blend-multiply z-10' }),
-          e('img', { src: 'cobweb left.jpg', alt: 'Cobweb Left', className: 'absolute left-[-10px] top-[-10px] h-32 w-auto opacity-75 pointer-events-none mix-blend-multiply' }),
+          e('img', { src: 'cw left.jpg', alt: 'Cobweb Left', className: 'absolute left-[-15px] top-[-15px] h-36 w-auto opacity-80 pointer-events-none mix-blend-multiply' }),
           
-          // Center: Title & Spider Icon
-          e('div', { className: 'flex items-center gap-3 z-10' },
-            e('img', { src: 'ladybugspidy.jfif', alt: 'Ladybug Spider', className: 'h-14 w-auto rounded-full shadow-sm' }),
-            e('h1', { className: 'text-5xl font-bold text-green-700' }, 'Spray Time!'),
-            e('img', { src: 'ladybugspidy.jfif', alt: 'Ladybug Spider', className: 'h-14 w-auto rounded-full shadow-sm scale-x-[-1]' })
-          ),
+          // Center: Title
+          e('h1', { className: 'text-5xl font-bold text-green-700 z-10' }, 'Spray Time!'),
 
-          // Right Side: Right Cobweb, Status Text & Print Button
-          e('img', { src: 'cobweb.jpg', alt: 'Cobweb Right', className: 'absolute right-[-10px] top-[-10px] h-32 w-auto opacity-75 pointer-events-none mix-blend-multiply' }),
+          // Right Side: Right Cobweb, Large Spider, Status Text & Print Button
+          e('img', { src: 'cw right.jpg', alt: 'Cobweb Right', className: 'absolute right-[-15px] top-[-15px] h-36 w-auto opacity-80 pointer-events-none mix-blend-multiply' }),
+          e('img', { src: 'ladybug spider.png', alt: 'Ladybug Spider', className: 'absolute right-36 top-1 h-20 w-auto z-10 drop-shadow-md' }),
           e('div', { className: 'absolute right-0 top-0 flex flex-col items-end gap-2 no-print z-10' },
             !error && e('div', { className: 'text-xs text-gray-500 font-medium' }, 
               chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
