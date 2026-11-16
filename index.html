@@ -216,25 +216,29 @@
       })();
 
      return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
-        // Header Row with Cornucopia and Turkey Ladybug
-        e('div', { className: 'relative flex items-center justify-center mb-8 h-28 mt-2 overflow-visible' },
+        // Header Row using Flexbox for rock-solid screen & print alignment
+        e('div', { className: 'flex items-center justify-between mb-6 mt-2 px-2' },
           // Left Side: Logo & Cornucopia
-          e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'absolute left-0 top-0 h-24 w-auto mix-blend-multiply z-10' }),
-          e('img', { src: 'cornecopea-removebg.png', alt: 'Cornucopia', className: 'absolute left-28 top-[-5px] h-28 w-auto z-20 drop-shadow-md' }),
+          e('div', { className: 'flex items-center gap-3' },
+            e('img', { src: 'GardensAliveLogo.png', alt: 'Gardens Alive', className: 'h-20 w-auto mix-blend-multiply' }),
+            e('img', { src: 'cornucopia.png?v=2', alt: 'Cornucopia', className: 'h-24 w-auto drop-shadow-md' })
+          ),
           
           // Center: Title
-          e('h1', { className: 'text-5xl font-bold text-green-700 z-10' }, 'Spray Time!'),
+          e('h1', { className: 'text-4xl md:text-5xl font-bold text-green-700 text-center' }, 'Spray Time!'),
 
-          // Right Side: Turkey Ladybug, Status Text & Print Button
-          e('img', { src: 'lady turkey bg removed.png', alt: 'Turkey Ladybug', className: 'absolute right-28 top-[-10px] h-36 w-auto z-30 drop-shadow-lg' }),
-          e('div', { className: 'absolute right-0 top-0 flex flex-col items-end gap-2 no-print z-10' },
-            !error && e('div', { className: 'text-xs text-gray-500 font-medium' }, 
-              chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
-            ),
-            e('button', { 
-              className: 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded shadow transition-colors', 
-              onClick: () => window.print() 
-            }, 'Print / Save PDF')
+          // Right Side: Turkey Ladybug & Print Controls
+          e('div', { className: 'flex items-center gap-4' },
+            e('img', { src: 'turkey-ladybug.png?v=2', alt: 'Turkey Ladybug', className: 'h-28 md:h-32 w-auto drop-shadow-lg' }),
+            e('div', { className: 'flex flex-col items-end gap-1 no-print' },
+              !error && e('div', { className: 'text-xs text-gray-500 font-medium whitespace-nowrap' }, 
+                chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
+              ),
+              e('button', { 
+                className: 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded shadow transition-colors whitespace-nowrap', 
+                onClick: () => window.print() 
+              }, 'Print / Save PDF')
+            )
           )
         ),
         // Error Display (only shows if something breaks)
@@ -400,32 +404,4 @@
 
         // Volumes & Footer Info
         e('h2', { className: 'font-semibold text-sm mt-3' }, 'Total Amount Sprayed'),
-        e('input', { type: 'text', className: 'w-full border rounded p-2 compact-input', placeholder: 'Enter total volume applied (e.g. 25 gallons)' }),
-        e('h2', { className: 'font-semibold text-sm mt-3' }, 'What Was Treated'),
-        e('textarea', { className: 'w-full border rounded p-2 compact-input', rows: '2', placeholder: 'Enter crop, block, or greenhouse zones treated...' }),
-
-        // Reference Links
-        e('div', { className: 'no-print' },
-          e('h2', { className: 'font-semibold mt-3 text-sm' }, 'Chemical Reference Links'),
-          e('div', { className: 'border rounded bg-white p-2 text-xs space-y-2' },
-            selectedChems.filter(Boolean).length === 0 ? e('div', { className: 'text-gray-500 italic' }, 'Select a chemical to view reference links.') : 
-            Array.from(new Set(selectedChems.filter(Boolean))).map(chem => e('div', { key: chem, className: 'border rounded p-2 bg-gray-50' },
-              e('div', { className: 'font-semibold mb-1' }, chem),
-              e('div', { className: 'flex flex-wrap gap-2' }, makeLinksForChemical(chem).map(l => e('a', { key: l.label, href: l.url, target: '_blank', rel: 'noopener noreferrer', className: 'text-blue-600 underline' }, `${l.label} ↗`)))
-            ))
-          )
-        ),
-
-        // Footer
-        e('div', { className: 'text-center text-[10px] text-gray-500 mt-4 pt-2 border-t' },
-          'Page formatted by ', e('span', { className: 'font-semibold' }, 'Jacob Imel'), '. For questions email ', e('a', { href: 'mailto:imeljacob@gmail.com', className: 'underline' }, 'imeljacob@gmail.com'), '.'
-        )
-      );
-    }
-
-    const container = document.getElementById('root');
-    const root = ReactDOM.createRoot(container);
-    root.render(e(SprayPlanBuilder));
-  </script>
-</body>
-</html>
+        e('input', { type: 'text', className: 'w-full border rounded p-
