@@ -216,7 +216,7 @@
       })();
 
      return e('div', { className: 'space-y-4 max-w-4xl mx-auto' },
-        // Header Row
+        // Header Row with larger turkey ladybug
         e('div', { className: 'flex items-center justify-between mb-6 mt-2 px-2' },
           // Left Side: Logo & Cornucopia
           e('div', { className: 'flex items-center gap-3' },
@@ -224,12 +224,12 @@
             e('img', { src: 'cornecopea-removebg.png?v=2', alt: 'Cornucopia', className: 'h-24 w-auto drop-shadow-md' })
           ),
           
-          // Center: Title
-          e('h1', { className: 'text-4xl md:text-5xl font-bold text-green-700 text-center' }, 'Spray Time!'),
+          // Center: Title (forced to stay on one single line)
+          e('h1', { className: 'text-3xl md:text-5xl font-bold text-green-700 text-center whitespace-nowrap' }, 'Spray Time!'),
 
-          // Right Side: Turkey Ladybug & Print Controls
+          // Right Side: Larger Turkey Ladybug & Print Controls
           e('div', { className: 'flex items-center gap-4' },
-            e('img', { src: 'lady turkey bg removed.png?v=2', alt: 'Turkey Ladybug', className: 'h-28 md:h-32 w-auto drop-shadow-lg' }),
+            e('img', { src: 'lady turkey bg removed.png?v=2', alt: 'Turkey Ladybug', className: 'h-36 md:h-40 w-auto drop-shadow-lg' }),
             e('div', { className: 'flex flex-col items-end gap-1 no-print' },
               !error ? e('div', { className: 'text-xs text-gray-500 font-medium whitespace-nowrap' }, 
                 chemicalOptions.length > 0 ? `(${chemicalOptions.length} chemicals loaded)` : ''
